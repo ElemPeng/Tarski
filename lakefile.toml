@@ -1,0 +1,10 @@
+name = "Tarski"
+version = "0.1.0"
+defaultTargets = ["tarski"]
+
+[[lean_lib]]
+name = "Tarski"
+
+[[lean_exe]]
+name = "tarski"
+root = "Main"
