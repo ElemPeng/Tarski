@@ -137,7 +137,8 @@ theorem Geom.B.symm {x y z : G.Point} (h : B x y z) : B z y x := G.btwn_symm h
 
 theorem Geom.btwn_symm_iff {x y z : G.Point} : B x y z ↔ B z y x := by
     constructor; all_goals exact G.btwn_symm
--- Satz 2.15 : Proven in the book with symmetry but easy with it
+
+-- Satz 2.15 : Proven in the book without symmetry but much easier with it
 
 theorem Geom.sgmt_add' {x y z x' y' z' : G.Point} :
     B x y z → B x' y' z' → EQ x y y' z' → EQ y z x' y' → EQ x z x' z' := by
@@ -158,17 +159,31 @@ theorem Geom.btwn_xyz_of_xyw_yzw {x y z w : G.Point} : B x y w → B y z w → B
     rw [G.btwn_id ha1]; apply G.btwn_symm ha2
 
 -- Satz 3.6a
-theorem Geom.btwn_yzw_of_xyz_xzw {x y z w : G.Point} : B x y z → B x z w → B y z w := by
-    intro hb1 hb2; rw [G.btwn_symm_iff] at hb1 hb2 ⊢
-    exact G.btwn_xyz_of_xyw_yzw hb2 hb1
+theorem Geom.btwn_yzw_of_xyz_xzw {x y z w : G.Point} : B x y z → B x z w → B y z w :=
+    fun hb1 hb2 ↦ (G.btwn_xyz_of_xyw_yzw hb2.symm hb1.symm).symm
 
 -- Satz 3.7a
 theorem Geom.btwn_xzw_of_xyz_yzw_ne {x y z w} : B x y z → B y z w → y ≠ z → B x z w := by
-    intro hb1 hb2 heq; have ⟨a, ha1, ha2⟩ : ∃ a, B x z a ∧ EQ z a z w := sgmt_const x z z w
+    intro hb1 hb2 hne; have ⟨a, ha1, ha2⟩ : ∃ a, B x z a ∧ EQ z a z w := sgmt_const x z z w
     have hb3 : B y z a := btwn_yzw_of_xyz_xzw G hb1 ha1
-    have he1 : EQ w a a a := G.five_sgmt heq hb2 hb3 (G.eq_refl) (ha2).symm (G.eq_refl) (G.eq_refl)
+    have he1 : EQ w a a a := G.five_sgmt hne hb2 hb3 (G.eq_refl) (ha2).symm (G.eq_refl) (G.eq_refl)
     exact (G.eq_id he1) ▸ ha1
 
+-- Satz 3.5b
+theorem Geom.btwn_xzw_of_xyw_yzw {x y z w : G.Point} : B x y w → B y z w → B x z w := by
+    intro hb1 hb2; have h := G.btwn_xyz_of_xyw_yzw hb1 hb2
+    by_cases h' : y = z
+    · exact h' ▸ hb1
+    · exact G.btwn_xzw_of_xyz_yzw_ne h hb2 h'
+
+-- Satz 3.6b
+theorem Geom.btwn_xyw_of_xyz_xzw {x y z w : G.Point} : B x y z → B x z w → B x y w :=
+    fun hb1 hb2 ↦ (G.btwn_xzw_of_xyw_yzw hb2.symm hb1.symm).symm
+
+-- Satz 3.7b
+theorem Geom.btwn_xyw_of_xyz_yzw_ne {x y z w} : B x y z → B y z w → y ≠ z → B x y w := by
+    intro hb1 hb2 hne; have hb3 : B x z w := G.btwn_xzw_of_xyz_yzw_ne hb1 hb2 hne
+    exact G.btwn_xyw_of_xyz_xzw hb1 hb3
 
 -- Satz 3.13abc, essentially.
 /-  In Beeson's work, the a b c in lo_dim are constants that
@@ -179,4 +194,24 @@ theorem Geom.dist_of_not_btwn {x y z : G.Point} : ¬ B x y z → x ≠ y ∧ y �
     intro h; refine ⟨?_, ?_⟩
     · intro h'; subst h'; exact h G.btwn_refl
     · intro h'; subst h'; exact h G.btwn_refl'
+
+-- Satz 3.14ab, essentially
+/-  Beeson defines three specific α β γ that are not collinear; then shows that they are unequal
+    These results shows that if you use segment construction to construct a segment from y on the
+    opposite side of x so that ya ≡ αβ, then B x y a and y ≠ a; The first result is obvious from
+    the definition of sgmt_const so I'm skipping it; the only content here for us is that if
+    a ≠ b and EQ x y a b, then x ≠ y. -/
+
+theorem Geom.eq_id_mt {x y a b : G.Point} : a ≠ b → EQ x y a b → x ≠ y :=
+    fun heq1 he1 heq2 ↦ heq1 (G.eq_id (heq2 ▸ he1.symm))
+
+-- Satz 3.17
+/-  Suppose you have a triangle A B C, with points X on AB, Y on BC, and Z on AC. Then the line
+    segments ZB and XY intersect at some point P -/
+theorem Geom.tri_4ths {a b c x y z : G.Point} :
+    B a x b → B c y b → B a z c → (∃ p, B z p b ∧ B x p y) := by
+    intro hb1 hb2 hb3; have ⟨e, hb4, hb5⟩ := G.inner_pasch hb2.symm hb3
+    have ⟨p, hb6, hb7⟩ := inner_pasch hb1.symm hb4
+    refine ⟨p, ?_, hb6⟩; apply G.btwn_xzw_of_xyw_yzw hb5 hb7
+
 end Betweenness
