@@ -207,8 +207,8 @@ theorem Geom.eq_id_mt {x y a b : G.Point} : a ≠ b → EQ x y a b → x ≠ y :
 
 -- Satz 3.17
 /-  Suppose you have a triangle A B C, with points X on AB, Y on BC, and Z on AC. Then the line
-    segments ZB and XY intersect at some point P -/
-theorem Geom.tri_4ths {a b c x y z : G.Point} :
+    segments ZB and XY intersect at some point P; basically the converse of ax_euclid -/
+theorem Geom.euclid_conv {a b c x y z : G.Point} :
     B a x b → B c y b → B a z c → (∃ p, B z p b ∧ B x p y) := by
     intro hb1 hb2 hb3; have ⟨e, hb4, hb5⟩ := G.inner_pasch hb2.symm hb3
     have ⟨p, hb6, hb7⟩ := inner_pasch hb1.symm hb4
