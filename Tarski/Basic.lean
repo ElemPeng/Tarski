@@ -189,11 +189,20 @@ theorem Geom.btwn_xyw_of_xyz_yzw_ne {x y z w} : B x y z → B y z w → y ≠ z 
 /-  In Beeson's work, the a b c in lo_dim are constants that
     just exist as part of the Skolemization; these three results show that a b and c are distinct.
     We show the more general result that if y is not on the interval xz, then y is not
-    Eual to either x nor z -/
+    Eual to either x nor z , and that this implies the existence of two and three distinct points-/
 theorem Geom.dist_of_not_btwn {x y z : G.Point} : ¬ B x y z → x ≠ y ∧ y ≠ z := by
     intro h; refine ⟨?_, ?_⟩
     · intro h'; subst h'; exact h G.btwn_refl
     · intro h'; subst h'; exact h G.btwn_refl'
+
+theorem Geom.three_dist : ∃ a b c : G.Point, a ≠ b ∧ b ≠ c ∧ a ≠ c := by
+    have ⟨a, b, c, h1, h2, _⟩ := G.lo_dim; refine ⟨a, b, c, ?_, ?_, ?_⟩
+    · exact (G.dist_of_not_btwn h1).1
+    · exact (G.dist_of_not_btwn h1).2
+    · exact (G.dist_of_not_btwn h2).2.symm
+
+theorem Geom.two_dist : ∃ a b : G.Point, a ≠ b := by
+    have ⟨a, b, _, h, _⟩ := G.three_dist; exact ⟨a, b, h⟩
 
 -- Satz 3.14ab, essentially
 /-  Beeson defines three specific α β γ that are not collinear; then shows that they are unEual
