@@ -2,15 +2,16 @@ class Geom where
     Point : Type
     EQ : Point → Point → Point → Point → Prop --- d(a,b) = d(c,d)
     B : Point → Point → Point → Prop --- the middle point is between the outer points, inclusive
-    eq_comm {x y : Point} : EQ x y y x -- Besson A1
-    eq_id {x y z : Point} : (EQ x y z z) → x = y -- Besson A3
-    eq_eucl {x y z u v w : Point} : EQ x y z w → EQ x y u v → EQ z w u v --Besson A2
-    btwn_id {x y : Point} : B x y x → x = y -- Besson A6
-    /- This is so-called inner inner_pasch: It says, if you have a triangle u y z, with
+    eq_comm {x y : Point} : EQ x y y x -- beeson A1
+    eq_id {x y z : Point} : (EQ x y z z) → x = y -- beeson A3
+    eq_eucl {x y z u v w : Point} : EQ x y z w → EQ x y u v → EQ z w u v --beeson A2
+    btwn_id {x y : Point} : B x y x → x = y -- beeson A6
+    /- This is so-called inner pasch: It says, if you have a triangle u y z, with
     x u y exterior to the triangle v on y z, then the line x v crosses side u y at
     some point a -/
-    inner_pasch {x y z u v : Point} : B x u z → B y v z → ∃ a, (B u a y ∧ B v a x) --Besson A7
-    as_cont {φ ψ : Point → Prop} : -- Besson A11
+    inner_pasch {x y z u v : Point} : B x u z → B y v z → ∃ a, (B u a y ∧ B v a x) --beeson A7
+
+    as_cont {φ ψ : Point → Prop} : -- beeson A11
         (∃ a, ∀ x y, φ x → ψ y → B a x y) → ∃ b, ∀ x y, φ x → ψ y → B x b y
 /-
     Let r be a ray with endpoint a. Let the first order formulae φ and ψ define
@@ -18,18 +19,21 @@ class Geom where
     point of X (with respect to a). Then there exists a point b in r lying between
     X and Y. This is essentially the Dedekind cut construction, carried out in a
     way that avoids quantification over sets.
+
+    I probably should replace this with bespoke instances of it so this remains a first-order
+    theory but I don't have to decide until chapter 12 anyway.
 -/
-    lo_dim : ∃ a b c, ¬ B a b c ∧ ¬ B b c a ∧ ¬ B c a b --- forces at least 2 dimensions; Besson A8
+    lo_dim : ∃ a b c, ¬ B a b c ∧ ¬ B b c a ∧ ¬ B c a b --- forces at least 2 dimensions; beeson A8
     hi_dim {x y z u v : Point} : EQ x u x v → EQ y u y v → EQ z u z v → u ≠ v →
-        B x y z ∨ B y z x ∨ B z x y --- forces at most 2 dimensions; Besson A9
+        B x y z ∨ B y z x ∨ B z x y --- forces at most 2 dimensions; beeson A9
     ax_euclid {x y z u v : Point} : B x u v → B y u z → x ≠ u →
-        ∃ a b, B x y a ∧ B x z b ∧ B a v b -- Besson A10
+        ∃ a b, B x y a ∧ B x z b ∧ B a v b -- beeson A10
 /-
     Given any angle and any point v in its interior, there exists a line segment
     including v, with an endpoint on each side of the angle.
 -/
     five_sgmt {x y z u x' y' z' u' : Point} : x ≠ y → B x y z → B x' y' z' → EQ x y x' y' →
-        EQ y z y' z' → EQ x u x' u' → EQ y u y' u' → EQ z u z' u' --Besson A5
+        EQ y z y' z' → EQ x u x' u' → EQ y u y' u' → EQ z u z' u' --beeson A5
 /-
     Begin with two triangles, xuz and x'u'z'. Draw the line segments yu and y'u', connecting a
     vertex of each triangle to a point on the side opposite to the vertex. The result is two
@@ -42,9 +46,9 @@ class Geom where
     and the two pairs of incident sides are congruent (xu ≡ x'u' and xz ≡ x'z'), then the remaining
     pair of sides is also congruent (uz ≡ u'z').
 -/
-    sgmt_const (x y a b : Point) : ∃ z, B x y z ∧ EQ y z a b --Besson A4
+    sgmt_const (x y a b : Point) : ∃ z, B x y z ∧ EQ y z a b --beeson A4
 
--- Satz numbering based on Michael Besson's Tarski Formalization Project
+-- Satz numbering based on Michael beeson's Tarski Formalization Project
 section Congruence
 
 variable (G : Geom)
@@ -131,7 +135,10 @@ theorem Geom.btwn_symm {x y z : G.Point} : B x y z → B z y x := by
 
 theorem Geom.B.symm {x y z : G.Point} (h : B x y z) : B z y x := G.btwn_symm h
 
+theorem Geom.btwn_symm_iff {x y z : G.Point} : B x y z ↔ B z y x := by
+    constructor; all_goals exact G.btwn_symm
 -- Satz 2.15 : Proven in the book with symmetry but easy with it
+
 theorem Geom.sgmt_add' {x y z x' y' z' : G.Point} :
     B x y z → B x' y' z' → EQ x y y' z' → EQ y z x' y' → EQ x z x' z' := by
     intro hb1 hb2 he1 he2; rw [G.eq_flip_right_iff] at he1 he2 ⊢
@@ -140,34 +147,36 @@ theorem Geom.sgmt_add' {x y z x' y' z' : G.Point} :
 -- Satz 3.3
 theorem Geom.btwn_refl {x y : G.Point} : B x x y := G.btwn_symm G.btwn_refl'
 
+-- Satz 3.4
+theorem Geom.eq_of_xyz_yxz {x y z : G.Point} : B x y z → B y x z → x = y := by
+    intro hb1 hb2; have ⟨a, ha1, ha2⟩ := G.inner_pasch hb1 hb2
+    exact (G.btwn_id ha1) ▸ (G.btwn_id ha2)
 
-theorem Geom.btwn_trans {x y z w : G.Point} : B x y w → B y z w → B x y z := by
-    intro h1 h2; have ⟨a, ha, ha'⟩ := G.inner_pasch h1 h2
-    rw [G.btwn_id ha]; apply G.btwn_symm ha'
+-- Satz 3.5a
+theorem Geom.btwn_xyz_of_xyw_yzw {x y z w : G.Point} : B x y w → B y z w → B x y z := by
+    intro hb1 hb2; have ⟨a, ha1, ha2⟩ := G.inner_pasch hb1 hb2
+    rw [G.btwn_id ha1]; apply G.btwn_symm ha2
 
+-- Satz 3.6a
+theorem Geom.btwn_yzw_of_xyz_xzw {x y z w : G.Point} : B x y z → B x z w → B y z w := by
+    intro hb1 hb2; rw [G.btwn_symm_iff] at hb1 hb2 ⊢
+    exact G.btwn_xyz_of_xyw_yzw hb2 hb1
+
+-- Satz 3.7a
+theorem Geom.btwn_xzw_of_xyz_yzw_ne {x y z w} : B x y z → B y z w → y ≠ z → B x z w := by
+    intro hb1 hb2 heq; have ⟨a, ha1, ha2⟩ : ∃ a, B x z a ∧ EQ z a z w := sgmt_const x z z w
+    have hb3 : B y z a := btwn_yzw_of_xyz_xzw G hb1 ha1
+    have he1 : EQ w a a a := G.five_sgmt heq hb2 hb3 (G.eq_refl) (ha2).symm (G.eq_refl) (G.eq_refl)
+    exact (G.eq_id he1) ▸ ha1
+
+
+-- Satz 3.13abc, essentially.
+/-  In Beeson's work, the a b c in lo_dim are constants that
+    just exist as part of the Skolemization; these three results show that a b and c are distinct.
+    We show the more general result that if y is not on the interval xz, then y is not
+    equal to either x nor z -/
 theorem Geom.dist_of_not_btwn {x y z : G.Point} : ¬ B x y z → x ≠ y ∧ y ≠ z := by
-    intro h; refine ⟨?_, ?_⟩ <;> intro h' <;> subst h'
-    · exact h G.btwn_refl
-    · exact h G.btwn_refl'
-
-theorem Geom.three_dist_pts : ∃ a b c : Point, a ≠ b ∧ a ≠ c ∧ b ≠ c := by
-    have ⟨a, b, c, h1, h2, _⟩ := G.lo_dim
-    refine ⟨a, b, c, ?_, ?_, ?_⟩
-    · exact (G.dist_of_not_btwn h1).1
-    · exact (G.dist_of_not_btwn h2).2.symm
-    · exact (G.dist_of_not_btwn h1).2
-
-theorem Geom.another_pt {x : G.Point} : ∃ y, x ≠ y := by
-    have ⟨a, b, _, h1, _⟩ := G.lo_dim; by_cases h : x = a
-    · subst h; have ⟨h',_⟩ := G.dist_of_not_btwn h1; exact ⟨b, h'⟩
-    · exact ⟨a, h⟩
-
+    intro h; refine ⟨?_, ?_⟩
+    · intro h'; subst h'; exact h G.btwn_refl
+    · intro h'; subst h'; exact h G.btwn_refl'
 end Betweenness
-
-/-
-    TO DO:
-    Define lines as equivalence classes of { ⟨a, b⟩ : Point × Point // a ≠ b }
-
-    ⟨a, b⟩ ≃ ⟨c, d⟩ if a b and c are collinear and a b and d are collinear
-    Collinear a b c : (assuming a ≠ b) B a b c ∨ B a c b ∨ B b a c
--/
