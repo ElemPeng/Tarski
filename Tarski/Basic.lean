@@ -228,6 +228,7 @@ end Betweenness
 
 section Ch4
 
+variable (G : Geom)
 /-
     Notes about Chapter 4: There is a function called insert: What it is doing is
     given a ray a'c', constructing a point b' on it so that ab ≡ a'b'.
@@ -244,5 +245,27 @@ def E3 {G : Geom} {x y z a b c : G.Point} := G.E x y a b ∧ G.E y z b c ∧ G.E
 
 -- this is definition 4.10 in Beeson
 def Col {G : Geom} {x y z : G.Point} := G.B x y z ∨ G.B y z x ∨ G.B z x y
+
+
+-- Satz 4.2; this is basically SSS to five_sgmt's SAS
+/- This is actually very clever so I feel the need to explain it: The way it works is
+we know xz = x'z', xu=x'u' and zu = z'u' so we construct w and w' so that B xzw and
+B x'z'w', use five_sgmt to get wu = w'u', and then use it again backwards on the
+triangles w y u and w' y' u' to get yu = y'u'.-/
+theorem Geom.inner_five_sgmt {x y z u x' y' z' u' : G.Point} : B x y z → B x' y' z' →
+    E x y x' y' → E y z y' z' → E x u x' u' → E z u z' u' → E y u y' u' := by
+    intro hb1 hb'1 he1 he2 he3 he4
+    by_cases heq : x = z
+    ·   subst heq; rw [btwn_id hb1] at he1 he3
+        rwa [G.E_id he1.symm] at he3
+    have ⟨w, hw1, hw2⟩ := G.sgmt_const x z x z
+    have ⟨w', hw'1, hw'2⟩ := G.sgmt_const x' z' x' z'
+    have he5 : E x z x' z' := G.sgmt_add hb1 hb'1 he1 he2
+    have he6 : E z w z' w' := G.E_trans (G.E_trans hw2 he5) hw'2.symm
+    have he7 : E w u w' u' := G.five_sgmt heq hw1 hw'1 he5 he6 he3 he4
+    have heq2 : w ≠ z := Ne.symm (G.E_id_mt heq hw2)
+    have hb2 : B w z y := (G.btwn_yzw_of_xyz_xzw hb1 hw1).symm
+    have hb'2 : B w' z' y' := (G.btwn_yzw_of_xyz_xzw hb'1 hw'1).symm
+    apply G.five_sgmt heq2 hb2 hb'2 he6.lr he2.lr he7 he4
 
 end Ch4
