@@ -202,13 +202,14 @@ theorem two_dist (G : Geom) : ∃ a b : Point, a ≠ b := by
 -- Satz 3.14ab, essentially
 /-  Beeson defines three specific α β γ that are not collinear; then shows that they are unEual
     These results shows that if you use segment construction to construct a segment from y on the
-    opposite side of x so that ya ≡ αβ, then B x y a and y ≠ a; The first result is obvious from
-    the definition of sgmt_const so I'm skipping it; the only content here for us is that if
-    a ≠ b and E x y a b, then x ≠ y. -/
+    opposite side of x so that ya ≡ αβ, then B x y a and y ≠ a; I've added more general results;
+    a contrapositive to E_id, and a variant of sgmt_const that constructs a nontrivial segment
+    without specifying which interval it is congruent to-/
 
 theorem E_id_mt {G : Geom} {x y a b : Point} : a ≠ b → E x y a b → x ≠ y :=
     fun hE1 he1 hE2 ↦ hE1 (E_id (hE2 ▸ he1.symm))
 
+/- This theorem -/
 theorem sgmt_const' {G : Geom} (x y : Point) : ∃ z, B x y z ∧ y ≠ z := by
     have ⟨a, b, hab⟩ := G.two_dist;
     have ⟨z, h1, h2⟩ := sgmt_const x y a b
@@ -282,7 +283,7 @@ theorem sgmt_sub {G : Geom} {x y z x' y' z' : Point} : B x y z → B x' y' z' �
 -- this is definition 4.3 in Beeson (basically side side side premises?)
 def E3 {G : Geom} (x y z a b c : Point) := E x y a b ∧ E y z b c ∧ E x z a c
 
--- Satz 4.5 and 4.6
+-- Satz 4.5
 /-  if ac ≡ a'c' and B a b c there is some b' so that B a' b' c'
     and ab ≡ a'b' and bc ≡ b'c'; 4.6 shows that you don't need to know what c is
     to construct b' but this is not interesting to me; Beeson uses a function
@@ -298,8 +299,18 @@ theorem sgmt_split {G : Geom} {a b c a' c' : Point} : B a b c → E a c a' c' �
         have he5 : E a c a' c'' := sgmt_add hb1 hb'5 he3.symm he4.symm
         have he6 : E a' c' a' c'' := E_eucl he1 he5
         have hb'6 : B w' a' c'' := btwn_xyw_of_xyz_xzw hb'3 hb'4
-        have heq3 : c' = c'' := unique_sgmt_const heq2.symm hb'2.symm (E_refl) hb'6 he6.symm
+        have heq3 : c' = c'' :=
+            unique_sgmt_const heq2.symm hb'2.symm (E_refl) hb'6 he6.symm
         subst heq3; exact ⟨b', hb'5, he3.symm, he4.symm⟩
+
+-- Satz 4.6; basically a uniqueness result for Satz 4.5 (misstated on the website)
+theorem btwn_of_btwn_e3 {G : Geom} {x y z x' y' z' : Point} :
+    B x y z → E3 x y z x' y' z' → B x' y' z' := by
+    intro hb ⟨he1, he2, he3⟩; have ⟨z'', hz'1, hz'2⟩ := sgmt_const x' y' y z
+    by_cases h : x' = y'
+    · subst h; exact btwn_refl
+    have h' : E z'' z' z z := five_sgmt h hz'1 hb he1.symm hz'2 he3.symm he2.symm
+    exact (E_id h')▸ hz'1
 
 -- this is definition 4.10 in Beeson
 def Col {G : Geom} (x y z : Point) := B x y z ∨ B y z x ∨ B z x y
@@ -341,6 +352,60 @@ theorem col_triv_xxy {G : Geom} {x y : Point} : Col x x y := by
 
 theorem col_triv_xyx {G : Geom} {x y : Point} : Col x y x := by
     unfold Col; exact Or.inr (Or.inr btwn_refl)
+
+-- Satz 4.14
+theorem col_of_col_e3 {G : Geom} {x y z x' y' z' : Point} :
+    Col x y z → E3 x y z x' y' z' → Col x' y' z' := by
+    intro hcol ⟨he1, he2, he3⟩; rcases hcol with h' | h' | h'
+    ·   apply Or.inl; exact btwn_of_btwn_e3 h' ⟨he1, he2, he3⟩
+    ·   apply Or.inr; apply Or.inl; exact btwn_of_btwn_e3 h' ⟨he2, he3.lr, he1.lr⟩
+    ·   apply Or.inr; apply Or.inr; exact btwn_of_btwn_e3 h' ⟨he3.lr, he1, he2.lr⟩
+
+-- Satz 4.15
+theorem e3_of_col_eq {G : Geom} {x y z x' y' : Point} : Col x y z → E x y x' y' →
+    ∃ z', E3 x y z x' y' z' := by
+    intro hcol he1; rcases hcol with h' | h' | h'
+    ·   have ⟨z', hb'1, he2⟩ := sgmt_const x' y' y z; rw [E_symm_iff] at he2
+        have he3 : E x z x' z' := sgmt_add h' hb'1 he1 he2
+        exact ⟨z', he1, he2, he3⟩
+    ·   have ⟨z', hb'1, he2, he3⟩ := sgmt_split h' he1.lr
+        exact ⟨z', he1, he2, he3.lr⟩
+    ·   have ⟨z', hb'1, he2⟩ := sgmt_const y' x' x z
+        have he3 := sgmt_add h' hb'1.symm he2.lr.symm he1
+        exact ⟨z', he1, he3.lr, he2.symm⟩
+
+-- Satz 4.16 (I thought this was pretty straightforward)
+theorem sgmt_extend {G : Geom} {x y z w x' y' z' w' : Point} :
+x ≠ y → Col x y z → E3 x y z x' y' z' → E x w x' w' → E y w y' w' → E z w z' w' := by
+    intro hne1 hcol ⟨he1, he2, he3⟩ he4 he5
+    rcases hcol with hb1 | hb1 | hb1
+    ·   have hb'1 := btwn_of_btwn_e3 hb1 ⟨he1, he2, he3⟩
+        exact five_sgmt hne1 hb1 hb'1 he1 he2 he4 he5
+    ·   have hb'1 := btwn_of_btwn_e3 hb1 ⟨he2, he3.lr, he1.lr⟩
+        exact inner_five_sgmt hb1 hb'1 he2 he3.lr he5 he4
+    ·   have hb'1 := btwn_of_btwn_e3 hb1 ⟨he3.lr, he1, he2.lr⟩
+        exact five_sgmt hne1.symm hb1.symm hb'1.symm he1.lr he3 he5 he4
+
+theorem e3_triv {G : Geom} (x y z : Point) : E3 x y z x y z := ⟨E_refl, E_refl, E_refl⟩
+
+-- Satz 4.17; a converse of hi_dim
+theorem E_of_ne_col_E {G : Geom} {x y z u v : Point} : x ≠ y → Col x y z →
+    E x u x v → E y u y v → E z u z v :=
+    fun hne1 hcol he1 he2 ↦ sgmt_extend hne1 hcol (e3_triv x y z) he1 he2
+
+-- Satz 4.18
+theorem eq_of_ne_col_E {G : Geom} {x y z z' : Point} : x ≠ y →
+Col x y z → E x z x z' → E y z y z' → z = z' :=
+    fun hne hcol he1 he2 ↦ E_id (E_of_ne_col_E hne hcol he1 he2).symm
+
+-- Satz 4.19
+theorem eq_of_btwn_E {G : Geom} {x y z z' : Point} : B x z y → E x z x z' →
+E y z y z' → z = z' := by
+    intro hb he1 he2; by_cases heq : x = y
+    ·   subst heq; have heq2 : x = z := btwn_id hb
+        subst heq2; exact E_id he2.symm
+    ·   have hcol : Col x y z := Or.inr <| Or.inl hb.symm
+        exact eq_of_ne_col_E heq hcol he1 he2
 
 end Geom
 end Ch4
