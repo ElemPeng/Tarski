@@ -49,9 +49,14 @@ class Geom where
     sgmt_const (x y a b : Point) : ∃ z, B x y z ∧ E y z a b --beeson A4
 
 -- Satz numbering based on Michael Beeson's Tarski Formalization Project
+
+class Congruence (α : Type u) where
+    congr : α → α → Prop
+
 section Congruence
 
 namespace Geom
+
 --Satz 2.1
 theorem E_refl {G : Geom} {x y : Point} : E x y x y := E_eucl E_comm E_comm
 
@@ -113,6 +118,7 @@ theorem unique_sgmt_const {G : Geom} {q a x b c y : Point} :
         have h2 : E x y y y :=
             five_sgmt hne hb1 hb2 E_refl h1 E_refl E_refl
         exact E_id h2
+
 end Geom
 end Congruence
 
@@ -133,7 +139,8 @@ theorem B.symm {G : Geom}  {x y z : Point} (h : B x y z) : B z y x := btwn_symm 
 theorem btwn_symm_iff {G : Geom} {x y z : Point} : B x y z ↔ B z y x := by
     constructor; all_goals exact btwn_symm
 
--- Satz 2.15 : Proven in the book without symmetry but much easier with it
+-- Satz 2.15 : The proof in Beeson basically derives Satz 3.1 in its proof;
+-- makes more sense to just prove it first.
 
 theorem sgmt_add' {G : Geom} {x y z x' y' z' : Point} :
     B x y z → B x' y' z' → E x y y' z' → E y z x' y' → E x z x' z' := by
@@ -149,36 +156,36 @@ theorem E_of_xyz_yxz {G : Geom} {x y z : Point} : B x y z → B y x z → x = y 
     exact (btwn_id ha1) ▸ (btwn_id ha2)
 
 -- Satz 3.5a
-theorem btwn_xyz_of_xyw_yzw {G : Geom} {x y z w : Point} : B x y w → B y z w → B x y z := by
+theorem xyz_of_xyw_yzw {G : Geom} {x y z w : Point} : B x y w → B y z w → B x y z := by
     intro hb1 hb2; have ⟨a, ha1, ha2⟩ := inner_pasch hb1 hb2
     rw [btwn_id ha1]; apply btwn_symm ha2
 
 -- Satz 3.6a
-theorem btwn_yzw_of_xyz_xzw {G : Geom} {x y z w : Point} : B x y z → B x z w → B y z w :=
-    fun hb1 hb2 ↦ (btwn_xyz_of_xyw_yzw hb2.symm hb1.symm).symm
+theorem yzw_of_xyz_xzw {G : Geom} {x y z w : Point} : B x y z → B x z w → B y z w :=
+    fun hb1 hb2 ↦ (xyz_of_xyw_yzw hb2.symm hb1.symm).symm
 
 -- Satz 3.7a
-theorem btwn_xzw_of_xyz_yzw_ne {G : Geom} {x y z w} : B x y z → B y z w → y ≠ z → B x z w := by
+theorem xzw_of_xyz_yzw_ne {G : Geom} {x y z w} : B x y z → B y z w → y ≠ z → B x z w := by
     intro hb1 hb2 hne; have ⟨a, ha1, ha2⟩ : ∃ a, B x z a ∧ E z a z w := sgmt_const x z z w
-    have hb3 : B y z a := btwn_yzw_of_xyz_xzw hb1 ha1
+    have hb3 : B y z a := yzw_of_xyz_xzw hb1 ha1
     have he1 : E w a a a := five_sgmt hne hb2 hb3 (E_refl) (ha2).symm (E_refl) (E_refl)
     exact (E_id he1) ▸ ha1
 
 -- Satz 3.5b
-theorem btwn_xzw_of_xyw_yzw {G : Geom} {x y z w : Point} : B x y w → B y z w → B x z w := by
-    intro hb1 hb2; have h := btwn_xyz_of_xyw_yzw hb1 hb2
+theorem xzw_of_xyw_yzw {G : Geom} {x y z w : Point} : B x y w → B y z w → B x z w := by
+    intro hb1 hb2; have h := xyz_of_xyw_yzw hb1 hb2
     by_cases h' : y = z
     · exact h' ▸ hb1
-    · exact btwn_xzw_of_xyz_yzw_ne h hb2 h'
+    · exact xzw_of_xyz_yzw_ne h hb2 h'
 
 -- Satz 3.6b
-theorem btwn_xyw_of_xyz_xzw {G : Geom} {x y z w : Point} : B x y z → B x z w → B x y w :=
-    fun hb1 hb2 ↦ (btwn_xzw_of_xyw_yzw hb2.symm hb1.symm).symm
+theorem xyw_of_xyz_xzw {G : Geom} {x y z w : Point} : B x y z → B x z w → B x y w :=
+    fun hb1 hb2 ↦ (xzw_of_xyw_yzw hb2.symm hb1.symm).symm
 
 -- Satz 3.7b
-theorem btwn_xyw_of_xyz_yzw_ne {G : Geom} {x y z w} : B x y z → B y z w → y ≠ z → B x y w := by
-    intro hb1 hb2 hne; have hb3 : B x z w := btwn_xzw_of_xyz_yzw_ne hb1 hb2 hne
-    exact btwn_xyw_of_xyz_xzw hb1 hb3
+theorem xyw_of_xyz_yzw_ne {G : Geom} {x y z w} : B x y z → B y z w → y ≠ z → B x y w := by
+    intro hb1 hb2 hne; have hb3 : B x z w := xzw_of_xyz_yzw_ne hb1 hb2 hne
+    exact xyw_of_xyz_xzw hb1 hb3
 
 -- Satz 3.13abc, essentially.
 /-  In Beeson's work, the a b c in lo_dim are constants that
@@ -223,7 +230,7 @@ theorem crossbar {G : Geom} {a b c x y z : Point} :
     B a x b → B c y b → B a z c → (∃ p, B z p b ∧ B x p y) := by
     intro hb1 hb2 hb3; have ⟨e, hb4, hb5⟩ := inner_pasch hb2.symm hb3
     have ⟨p, hb6, hb7⟩ := inner_pasch hb1.symm hb4
-    refine ⟨p, ?_, hb6⟩; apply btwn_xzw_of_xyw_yzw hb5 hb7
+    refine ⟨p, ?_, hb6⟩; apply xzw_of_xyw_yzw hb5 hb7
 
 end Geom
 end Betweenness
@@ -256,8 +263,8 @@ theorem inner_five_sgmt {G : Geom} {x y z u x' y' z' u' : Point} : B x y z → B
     have ⟨w', hw'1, he6⟩ := sgmt_const x' z' z w
     have he5 : E x z x' z' := sgmt_add hb1 hb'1 he1 he2
     have he7 : E w u w' u' := five_sgmt heq hw1 hw'1 he5 he6.symm he3 he4
-    have hb2 : B w z y := (btwn_yzw_of_xyz_xzw hb1 hw1).symm
-    have hb'2 : B w' z' y' := (btwn_yzw_of_xyz_xzw hb'1 hw'1).symm
+    have hb2 : B w z y := (yzw_of_xyz_xzw hb1 hw1).symm
+    have hb'2 : B w' z' y' := (yzw_of_xyz_xzw hb'1 hw'1).symm
     apply five_sgmt heq2.symm hb2 hb'2 he6.lr.symm he2.lr he7 he4
 
 -- Satz 4.3: segment subtraction
@@ -272,8 +279,8 @@ theorem sgmt_sub {G : Geom} {x y z x' y' z' : Point} : B x y z → B x' y' z' �
     have ⟨w, hb2, heq2⟩ := sgmt_const' y z
     have ⟨w', hb'2, he3⟩ := sgmt_const y' z' z w
     rw [E_symm_iff] at he3
-    have hb3 : B x z w := btwn_xzw_of_xyz_yzw_ne hb1 hb2 heq
-    have hb'3 : B x' z' w' := btwn_xzw_of_xyz_yzw_ne hb'1 hb'2 heq'
+    have hb3 : B x z w := xzw_of_xyz_yzw_ne hb1 hb2 heq
+    have hb'3 : B x' z' w' := xzw_of_xyz_yzw_ne hb'1 hb'2 heq'
     have he4 : E x w x' w' := sgmt_add hb3 hb'3 he1 he3
     rw [btwn_symm_iff] at hb2 hb'2
     rw [E_flip_both_iff] at he1 he2 he3 he4 ⊢
@@ -295,10 +302,10 @@ theorem sgmt_split {G : Geom} {a b c a' c' : Point} : B a b c → E a c a' c' �
         have ⟨w, hb2, he2⟩ := sgmt_const c a a' w'
         have ⟨b', hb'3, he3⟩ := sgmt_const w' a' a b
         have ⟨c'', hb'4, he4⟩ := sgmt_const w' b' b c
-        have hb'5 : B a' b' c'' := btwn_yzw_of_xyz_xzw hb'3 hb'4
+        have hb'5 : B a' b' c'' := yzw_of_xyz_xzw hb'3 hb'4
         have he5 : E a c a' c'' := sgmt_add hb1 hb'5 he3.symm he4.symm
         have he6 : E a' c' a' c'' := E_eucl he1 he5
-        have hb'6 : B w' a' c'' := btwn_xyw_of_xyz_xzw hb'3 hb'4
+        have hb'6 : B w' a' c'' := xyw_of_xyz_xzw hb'3 hb'4
         have heq3 : c' = c'' :=
             unique_sgmt_const heq2.symm hb'2.symm (E_refl) hb'6 he6.symm
         subst heq3; exact ⟨b', hb'5, he3.symm, he4.symm⟩
@@ -409,3 +416,177 @@ E y z y z' → z = z' := by
 
 end Geom
 end Ch4
+
+section Ch5
+namespace Geom
+
+-- Satz 5.1, due to Gupta (1965); this one is a mess.
+theorem xzw_or_xwz_of_ne_xyz_xyw {G : Geom} {x y z w : Point} :
+x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
+    sorry
+
+-- Satz 5.2
+theorem yzw_or_ywz_of_ne_xyz_xyw {G : Geom} {x y z w : Point} :
+x ≠ y → B x y z → B x y w → (B y z w ∨ B y w z) := by
+    intro hne hb1 hb2; rcases (xzw_or_xwz_of_ne_xyz_xyw hne hb1 hb2) with h | h
+    ·   exact Or.inl (yzw_of_xyz_xzw hb1 h)
+    ·   exact Or.inr (yzw_of_xyz_xzw hb2 h)
+
+-- Satz 5.3
+theorem xyz_or_xzy_of_xyw_xzw {G : Geom} {x y z w : Point} :
+B x y w → B x z w → (B x y z ∨ B x z y) := by
+    intro hb1 hb2; have ⟨u, hu1, hu2⟩ := sgmt_const' x w
+    have hywu : B y w u := yzw_of_xyz_xzw hb1 hu1
+    have hzwu : B z w u := yzw_of_xyz_xzw hb2 hu1
+    have h1 : B w z y ∨ B w y z := yzw_or_ywz_of_ne_xyz_xyw hu2.symm hzwu.symm hywu.symm
+    rw [btwn_symm_iff] at hb1 hb2; rcases h1 with h | h
+    ·   exact Or.inl (yzw_of_xyz_xzw h hb1).symm
+    ·   exact Or.inr (yzw_of_xyz_xzw h hb2).symm
+
+-- Def 5.4: less than or equal to
+
+def le {G : Geom} (x y z w : Point) := ∃ a, (B z a w ∧ E x y z a)
+
+-- Satz 5.5
+theorem sgmt_of_le {G : Geom} {x y z w : Point} :
+    le x y z w → ∃ a, B x y a ∧ E x a z w := by
+    intro ⟨b, hb1, he1⟩; have ⟨a, hb2, he2⟩ := sgmt_const x y b w
+    exact ⟨a, hb2, sgmt_add hb2 hb1 he1 he2⟩
+
+theorem le_of_sgmt {G : Geom} {x y z w : Point} :
+    (∃ a, B x y a ∧ E x a z w) → le x y z w := by
+    intro ⟨b, hb1, he1⟩; have ⟨a, hb2, he2, he3⟩ := sgmt_split hb1 he1
+    exact ⟨a, hb2, he2⟩
+
+theorem le_iff {G : Geom} {x y z w : Point} : le x y z w ↔ (∃ a, B x y a ∧ E x a z w) :=
+    Iff.intro sgmt_of_le le_of_sgmt
+
+-- Satz 5.6
+theorem le_of_le_E {G : Geom} {x y z w x' y' z' w': Point} :
+    le x y z w → E x y x' y' → E z w z' w' → le x' y' z' w' := by
+    intro ⟨a, ha1, ha2⟩ he1 he2; have ⟨a', ha'1, ha'2, _⟩ := sgmt_split ha1 he2
+    refine ⟨a', ha'1, E_trans (E_trans he1.symm ha2) ha'2⟩
+
+theorem le.l {G : Geom} {x y z w : Point} (h : le x y z w) : le y x z w :=
+    le_of_le_E h E_comm E_refl
+
+theorem le.r {G : Geom} {x y z w : Point} (h : le x y z w) : le x y w z :=
+    le_of_le_E h E_refl E_comm
+
+theorem le.lr {G : Geom} {x y z w : Point} (h : le x y z w) : le y x w z := h.l.r
+
+-- Satz 5.7
+theorem le_refl {G : Geom} {x y : Point} : le x y x y := ⟨y, btwn_refl', E_refl⟩
+
+-- Satz 5.8
+theorem le_trans {G : Geom} {x y z w u v : Point} : le x y z w → le z w u v → le x y u v := by
+    intro ⟨a, ha1, ha2⟩ ⟨b, hb1, hb2⟩; have ⟨c, hc1, hc2, hc3⟩ := sgmt_split ha1 hb2
+    exact ⟨c, xyw_of_xyz_xzw hc1 hb1, E_trans ha2 hc2⟩
+
+-- Satz 5.9; moved out narboux's lemma and added eq_of_xyz_xzy myself; easy enough.
+theorem narboux_lemma {G : Geom} {x y z : Point} : B x y z → E x y x z → y = z := by
+    intro hb1 he1; by_cases h : x = y
+    ·   subst h; exact E_id he1.symm
+    have ⟨w, hw1, hw2⟩ := sgmt_const' y x; rw [btwn_symm_iff] at hw1
+    have hw3 : B w x z := xyw_of_xyz_yzw_ne hw1 hb1 h
+    apply unique_sgmt_const hw2.symm hw1 he1 hw3 E_refl
+
+theorem eq_of_xyz_xzy {G : Geom} {x y z : Point} : B x y z → B x z y → y = z :=
+    fun hb1 hb2 ↦ btwn_id <| yzw_of_xyz_xzw hb1 hb2
+
+theorem le_antisymm {G : Geom} {x y z w : Point} : le x y z w → le z w x y → E x y z w := by
+    intro ⟨a, ha1, ha2⟩ ⟨b, hb1, hb2⟩; have ⟨c, hc1, hc2, hc3⟩ := sgmt_split ha1 hb2
+    have he1 : E x y x c := E_trans ha2 hc2
+    have hb3 : B x c y := xyw_of_xyz_xzw hc1 hb1
+    have heq1 : c = y := narboux_lemma hb3 he1.symm
+    subst heq1; have heq2 : c = b := eq_of_xyz_xzy hc1 hb1
+    subst heq2; exact hb2.symm
+
+-- Satz 5.10
+theorem le_total {G : Geom} {x y z w : Point} : le x y z w ∨ le z w x y := by
+    have ⟨b, ha1, ha2⟩ := sgmt_const' w z; rw [btwn_symm_iff] at ha1
+    have ⟨a, hb1, hb2⟩ := sgmt_const b z x y
+    have h := yzw_or_ywz_of_ne_xyz_xyw ha2.symm ha1 hb1
+    rcases h with h' | h'
+    ·   apply Or.inr; rw [le_iff]; exact ⟨a, h', hb2⟩
+    ·   apply Or.inl; exact ⟨a, h', hb2.symm⟩
+
+-- Satz 5.11
+theorem nonneg {G : Geom} {x y z : Point} : le z z x y := ⟨x, btwn_refl, degen_sgmts⟩
+
+-- Satz 5.12
+theorem le_of_btwn_left {G : Geom} {x y z : Point} : B x y z → le x y x z := by
+    intro hb1; exact ⟨y, hb1, E_refl⟩
+
+theorem le_of_btwn_right {G : Geom} {x y z : Point} : B x y z → le y z x z := by
+    intro hb1; unfold le; rw [btwn_symm_iff] at hb1;
+    have ⟨a, ha1, ha2, ha3⟩ := sgmt_split hb1 E_comm; exact ⟨a, ha1, ha2.l⟩
+
+theorem btwn_of_col_le {G : Geom} {x y z : Point} :
+    Col x y z → le x y x z → le y z x z → B x y z := by
+    intro hcol hle1 hle2; rcases hcol with h | h | h
+    ·   exact h
+    ·   have hle3 : le x z x y := (le_of_btwn_right h).lr; rw [btwn_symm_iff] at h
+        have heq1 : E x y x z := le_antisymm hle1 hle3
+        have heq2 : z = y := narboux_lemma h <| heq1.symm
+        subst heq2; exact btwn_refl'
+    ·   have hle3 : le x z y z := (le_of_btwn_left h).lr; rw [btwn_symm_iff] at h
+        have heq1 : E y z x z := le_antisymm hle2 hle3
+        have heq2 : x = y := narboux_lemma h.symm heq1.lr.symm
+        subst heq2; exact btwn_refl
+
+theorem xyz_iff_xy_le_and_yz_le_of_col {G : Geom} {x y z : Point} :
+    Col x y z → (B x y z ↔ (le x y x z ∧ le y z x z)) := fun hcol ↦ Iff.intro
+        (fun hb ↦ ⟨le_of_btwn_left hb, le_of_btwn_right hb⟩)
+        (fun ⟨hl1, hl2⟩ ↦ btwn_of_col_le hcol hl1 hl2)
+
+end Geom
+end Ch5
+
+section Ch6
+namespace Geom
+
+-- sameside x y z means ray x y = ray x z and neither y nor z = x
+def Point.sameside {G : Geom} (x y z : Point) := y ≠ x ∧ z ≠ x ∧ (B x y z ∨ B x z y)
+
+-- Satz 6.2;
+theorem ssxy_of_xaz_yaz {G : Geom} {x y z a : Point} : x ≠ a → y ≠ a → z ≠ a →
+    B x a z → B y a z → a.sameside x y := by
+    intro h1 h2 h3 hb1 hb2; unfold Point.sameside
+    rw [btwn_symm_iff] at hb1 hb2
+    exact ⟨h1, h2, (yzw_or_ywz_of_ne_xyz_xyw h3 hb1 hb2)⟩
+
+theorem yaz_of_xaz_ssxy {G : Geom} {x y z a : Point} :
+    B x a z → a.sameside x y → B y a z := by
+    intro hb1 ⟨h1, _, hss1⟩; rcases hss1 with h | h
+    ·   exact xzw_of_xyz_yzw_ne h.symm hb1 h1
+    ·   exact yzw_of_xyz_xzw h.symm hb1
+
+theorem ssxy_iff_yaz_of_xaz {G : Geom} {x y z a : Point} :
+    x ≠ a → y ≠ a → z ≠ a → B x a z → (a.sameside x y ↔ B y a z) := by
+    intro h1 h2 h3 hb1; constructor
+    ·   exact yaz_of_xaz_ssxy hb1
+    ·   exact ssxy_of_xaz_yaz h1 h2 h3 hb1
+
+-- Satz 6.3
+theorem exists_os_of_ss {G : Geom} {x y a : Point} :
+    a.sameside x y → (∃ z, z ≠ a ∧ B x a z ∧ B y a z) := by
+    intro ⟨h1, h2, hb1⟩; have ⟨z, hz1, hz2⟩ := sgmt_const' x a
+    rcases hb1 with h | h
+    ·   exact ⟨z, hz2.symm, hz1, xzw_of_xyz_yzw_ne h.symm hz1 h1⟩
+    ·   exact ⟨z, hz2.symm, hz1, yzw_of_xyz_xzw h.symm hz1⟩
+
+theorem ss_of_exists_os {G : Geom} {x y a : Point} : x ≠ a → y ≠ a →
+    (∃ z, z ≠ a ∧ B x a z ∧ B y a z) → a.sameside x y := by
+    intro h1 h2 ⟨z, h3, hb1, hb2⟩; refine ⟨h1, h2, ?_⟩
+    exact yzw_or_ywz_of_ne_xyz_xyw h3 hb1.symm hb2.symm
+
+theorem exists_os_iff_ss {G : Geom} {x y a : Point} : x ≠ a → y ≠ a →
+    ((∃ z, z ≠ a ∧ B x a z ∧ B y a z) ↔ a.sameside x y) := by
+    intro h1 h2; constructor
+    · exact ss_of_exists_os h1 h2
+    · exact exists_os_of_ss
+-- Satz 6.4
+
+end Geom
+end Ch6
