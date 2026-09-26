@@ -86,6 +86,8 @@ theorem btwn_of_btwn_e3 {G : Geom} {x y z x' y' z' : Point} :
 -- this is definition 4.10 in Beeson
 def Col {G : Geom} (x y z : Point) := B x y z ∨ B y z x ∨ B z x y
 
+theorem B.col {G : Geom} {x y z : Point} (h : B x y z) : Col x y z := Or.inl h
+
 -- Satz 4.11 : Collinear is symmetric in all of its inputs
 theorem Col.xy {G : Geom} {x y z : Point} (h : Col x y z) : Col y x z := by
     unfold Col at h ⊢; rcases h with h' | h' | h'
@@ -128,9 +130,9 @@ theorem col_triv_xyx {G : Geom} {x y : Point} : Col x y x := by
 theorem col_of_col_e3 {G : Geom} {x y z x' y' z' : Point} :
     Col x y z → E3 x y z x' y' z' → Col x' y' z' := by
     intro hcol ⟨he1, he2, he3⟩; rcases hcol with h' | h' | h'
-    ·   apply Or.inl; exact btwn_of_btwn_e3 h' ⟨he1, he2, he3⟩
-    ·   apply Or.inr; apply Or.inl; exact btwn_of_btwn_e3 h' ⟨he2, he3.lr, he1.lr⟩
-    ·   apply Or.inr; apply Or.inr; exact btwn_of_btwn_e3 h' ⟨he3.lr, he1, he2.lr⟩
+    ·   exact (btwn_of_btwn_e3 h' ⟨he1, he2, he3⟩).col
+    ·   exact (btwn_of_btwn_e3 h' ⟨he2, he3.lr, he1.lr⟩).col.r
+    ·   exact (btwn_of_btwn_e3 h' ⟨he3.lr, he1, he2.lr⟩).col.l
 
 -- Satz 4.15
 theorem e3_of_col_eq {G : Geom} {x y z x' y' : Point} : Col x y z → E x y x' y' →

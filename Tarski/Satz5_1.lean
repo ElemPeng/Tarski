@@ -19,6 +19,8 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
       subst h; exact Or.inl (btwn_refl')
     have ⟨y', hy'1, hy'2⟩ := sgmt_const x z' z y
     have ⟨y'', hy''1, hy''2⟩ := sgmt_const x w' w y
+-- we now have x y w z' y' and x y z w' y''. Our next goal is to show
+-- that because of sgmt_add, yy' ≡ yy'' and hence y' = y''
 -- show that yz' ≡ y''z
     have hywz' : B y w z' := yzw_of_xyz_xzw hxyw hz'1
     have hy''w'z : B y'' w' z := (yzw_of_xyz_xzw hw'1 hy''1).symm
@@ -48,9 +50,12 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
 -- use inner_five_sgmt to get E e w e w' with  z e z' w z e z' w'
     have hewew' : E e w e w' :=
       inner_five_sgmt hzez' hzez' E_refl E_refl hw'2.symm (E_trans hz'2.l he3.symm.lr)
--- if z = z' we're done so assume z ≠ z'
+-- if z = z' we're done so assume z ≠ z'. Our goal is now to show w = w'
     by_cases hzz' : z = z'
     · subst hzz'; exact Or.inr hz'1
+    suffices hww' : w = w' by (subst hww'; exact Or.inl hw'1)
+-- we now construct a triangle zpq congruent to zww' so that
+-- r is the midpoint of pq and prq ≡ wew'; it then suffices that p = q
     have ⟨p, hz'zp, he4⟩ := sgmt_const z' z z w'
     have ⟨r, hw'zr, he5⟩ := sgmt_const w' z z e
     have ⟨q, hprq, he6⟩ := sgmt_const p r r p
@@ -58,10 +63,13 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
     have hrpew' : E r p e w' :=
       five_sgmt (Ne.symm hzw') hw'zr (xyz_of_xyw_yzw hz'zp.symm hzez') he4.lr.symm he5 E_comm he4
     have hrqew : E r q e w := E_trans (E_trans he6 hrpew') hewew'.symm
+-- get E w w' p q; then it suffices that p = q
+    have hww'pq : E w w' q p := sgmt_add hwew' hprq.symm hrqew.symm.lr hrpew'.symm
+    suffices hpq : p = q by (subst hpq; exact E_id hww'pq)
 -- rule out w' = e then use five_sgmt with  w' e w z and p r q z
     by_cases hw'e : w' = e
-    · subst hw'e; have hw'w : w' = w := E_id hewew'; subst hw'w
-      exact Or.inl hw'1
+    · subst hw'e; have hpr : p = r := E_id hrpew'.l; subst hpr
+      exact E_id he6
     have hwzqz : E w z q z :=
       five_sgmt (hw'e) hwew'.symm hprq hrpew'.symm.lr hrqew.symm he4.symm.lr he5.lr.symm
 -- get E z p z q
@@ -70,26 +78,17 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
     by_cases hrz : r = z
     · subst hrz; have hre : r = e := E_id he5.symm; subst hre
       have hrz' : r = z' := E_id hezez'.symm; subst hrz'
-      exact Or.inr hz'1
+      exact absurd (rfl) hzz'
 -- get E w' p w' q and E y p y q
-    have hw'pw'q : E w' p w' q :=
-      E_of_ne_col_E hrz (Or.inl hw'zr.symm) he6.symm hzpzq
-    have hypyq : E y p y q :=
-      E_of_ne_col_E hzw' (Or.inr <| Or.inr hyzw') hzpzq hw'pw'q
+    have hw'pw'q : E w' p w' q := E_of_ne_col_E hrz (hw'zr).col.xz he6.symm hzpzq
+    have hypyq : E y p y q := E_of_ne_col_E hzw' (hyzw').col.l hzpzq hw'pw'q
 -- get E y' p y' q, deal with the case y = y', and show E z' p z' q
-    have hy'py'q : E y' p y' q :=
-      E_of_ne_col_E hzw' (Or.inl hy''w'z.symm) hzpzq hw'pw'q
+    have hy'py'q : E y' p y' q := E_of_ne_col_E hzw' (hy''w'z).col.xz hzpzq hw'pw'q
     by_cases hyy' : y = y'
     · subst hyy'; exact absurd (btwn_id hy''zy) hyz
-    have hz'pz'q : E z' p z' q :=
-      E_of_ne_col_E hyy' (Or.inr <| Or.inl hyz'y'.symm) hypyq hy'py'q
-    have hpppq : E p p p q :=
-      E_of_ne_col_E hzz' (Or.inr <| Or.inr hz'zp.symm) hzpzq hz'pz'q
-    have hpq : p = q := E_id hpppq.symm
-    subst hpq; have hrp : p = r := btwn_id hprq; subst hrp
-    have hew : e = w := E_id hrqew.symm; subst hew
-    have hew' : e = w' := E_id hewew'.symm
-    exact absurd hew'.symm hw'e
+    have hz'pz'q : E z' p z' q := E_of_ne_col_E hyy' (hyz'y').col.yz  hypyq hy'py'q
+    have hpppq : E p p p q := E_of_ne_col_E hzz' (hz'zp).col.xy hzpzq hz'pz'q
+    exact E_id hpppq.symm
 
 end Geom
 end Satz_5_1
