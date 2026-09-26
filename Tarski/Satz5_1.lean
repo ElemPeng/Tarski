@@ -88,8 +88,8 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
     have hpq : p = q := E_id hpppq.symm
     subst hpq; have hrp : p = r := btwn_id hprq; subst hrp
     have hew : e = w := E_id hrqew.symm; subst hew
-    have hew' : e = w' := E_id hewew'.symm; subst hew'
-    exact Or.inl hw'1
+    have hew' : e = w' := E_id hewew'.symm
+    exact absurd hew'.symm hw'e
 
 end Geom
 end Satz_5_1
