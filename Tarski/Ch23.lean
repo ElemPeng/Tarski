@@ -76,7 +76,7 @@ theorem btwn_refl' {G : Geom} {x y : Point} : B y x x := by
     have hax : x = a := E_id ha'; subst hax; exact ha
 
 -- Satz 3.2
-theorem btwn_symm {G : Geom} {x y z : Point} : B x y z → B z y x := by
+@[symm] theorem btwn_symm {G : Geom} {x y z : Point} : B x y z → B z y x := by
     intro h; have ⟨a, ha, ha'⟩ : ∃ a, B z a x ∧ B y a y := inner_pasch btwn_refl' h
     have hay : y = a := btwn_id ha'; rwa [hay]
 

@@ -102,15 +102,20 @@ different from a; Ray defines its equivalence classes which are halflines
 -/
 
 def Ray {G : Geom} (a p : Point) : PSet G := a.sameside p
-
-def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, p ≠ a ∧ K = Ray a p
+-- note : a.sameside p x enforces p ≠ a and x ≠ a
+def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, K = Ray a p
 
 -- Def 6.9. Halflines H(ap) H(aq) originating from a are called
--- opposites if B p a q
+-- opposites if B p a q (here Ray a p and Ray a q are opposite rays)
+
+def opprays {G : Geom} {p a q : Point} := a ≠ p ∧ a ≠ q ∧ B p a q
+
+def opprays' {G : Geom} {R1 R2 : PSet G} :=
+    ∃ p a q, R1 = Ray a p ∧ R2 = Ray a q ∧ B p a q
 
 /- Satz 6.11 : for every Ray a r and distinct points b and c, there is a unique
-   point x on Ray a r so that ax ≡ bc
--/
+   point x on Ray a r so that ax ≡ bc -/
+
 theorem narboux_lemma_ss {G : Geom} {a x y : Point} :
     a.sameside x y → E a x a y → x = y := by
     intro ⟨_, _, hb⟩ he; rcases hb with h | h
@@ -148,20 +153,94 @@ theorem baxy_iff_le_of_ss {G : Geom} {a x y : Point} : a.sameside x y →
     (le a x a y ↔ B a x y) := fun hss ↦ Iff.intro (baxy_of_ss_le hss) (le_of_ss_baxy hss)
 
 /- Def 6.14 : for distinct points p and q define the line pq to be
-    the set L(pq) := {x : Col x p q}-/
+    the set L(pq) := {x : Col x p q}; with this definition, Line p q = ∅ if p = q
+-/
 
-def Line {G : Geom} (p q : Point) : PSet G := fun x ↦ Col p q x
+def Line {G : Geom} (p q : Point) : PSet G := fun x ↦ p ≠ q ∧ Col p q x
 
-def isLine {G : Geom} (L : Point → Prop) : Prop := ∃ p q : Point, (p ≠ q) ∧ L = Line p q
+def isLine {G : Geom} (L : Point → Prop) : Prop := ∃ p q : Point, L = Line p q
 
 -- Satz 6.15. The Line pq is the union of the rays formed by p and q from some point a
 -- along with the point a itself
 
+theorem ssxy_of_axy_ne {G : Geom} {a x y : Point} : a ≠ x → B a x y → a.sameside x y := by
+    intro hax haxy; unfold Point.sameside; refine ⟨hax.symm, ?_, Or.inl haxy⟩
+    intro hya; subst hya; exact hax <| btwn_id haxy
+
+theorem ne_of_btwn_ne {G : Geom} {a b c : Point} : a ≠ b → B a b c → a ≠ c :=
+    fun h1 h2 h3 ↦ h1 (btwn_id (h3 ▸ h2))
+
+theorem sgmt_mem_trichotomy {G : Geom} {p q x a : Point} :
+    p ≠ q → B p a q → B p x q → (a.sameside p x ∨ x = a ∨ a.sameside q x) := by
+        intro hpq hpaq hpxq; by_cases hxa : x = a; exact Or.inr <| Or.inl hxa
+        simp only [hxa, false_or]; rcases xyz_or_xzy_of_xyw_xzw hpaq hpxq with h | h
+        ·   have haxq : B a x q := yzw_of_xyz_xzw h hpxq; apply Or.inr
+            have hqa : q ≠ a := (ne_of_btwn_ne (Ne.symm hxa) haxq).symm
+            exact ⟨hqa, hxa, Or.inr haxq⟩
+        ·   rw [btwn_symm_iff] at h; apply Or.inl
+            have hpa : p ≠ a := (ne_of_btwn_ne (Ne.symm hxa) h).symm
+            exact ⟨hpa, hxa, Or.inr h⟩
+
 theorem line_of_rays {G : Geom} {a p q : Point} : a ≠ p → a ≠ q → B p a q →
     ∀ x, x ∈ Line p q ↔ ((x ∈ Ray a p) ∨ (x = a) ∨ (x ∈ Ray a q)) := by
-    intro hpq hpr hqpr x; constructor
-    ·   sorry
-    ·   sorry
+    intro hap haq hpaq x; unfold Line Ray; constructor
+    ·   intro ⟨hpq, hcol⟩; rcases hcol with h | h | h
+        ·   apply Or.inr ∘ Or.inr; have haqx : B a q x := yzw_of_xyz_xzw hpaq h
+            exact ssxy_of_axy_ne haq haqx
+        ·   exact sgmt_mem_trichotomy hpq hpaq h.symm
+        ·   apply Or.inl; have hapx : B a p x := yzw_of_xyz_xzw hpaq.symm h.symm
+            exact ssxy_of_axy_ne hap hapx
+    ·   intro h; have hpq : p ≠ q := ne_of_btwn_ne hap.symm hpaq
+        refine ⟨hpq, ?_⟩; rcases h with ⟨h1, h2, h3⟩ | h1 | ⟨h1, h2, h3⟩
+        ·   rcases h3 with h' | h'
+            ·   exact (xzw_of_xyz_yzw_ne hpaq.symm h' hap).col.xy
+            ·   exact (xyw_of_xyz_xzw h'.symm hpaq).col.yz
+        ·   subst h1; exact (hpaq).col.yz
+        ·   rcases h3 with h' | h'
+            ·   exact (xzw_of_xyz_yzw_ne hpaq h' haq).col
+            ·   exact (xzw_of_xyw_yzw hpaq h').col.yz
+
+-- Satz 6.16
+/- this is miserable; there has to be a cleaner way to do this lol-/
+theorem line_eq {G : Geom} {p q s : Point} :
+    s ≠ p → s ∈ Line p q → (Line p q = Line p s) := by
+    intro hsp ⟨hpq, hcol1⟩; unfold Line; funext z
+    simp only [ne_eq, hpq, not_false_eq_true, true_and, hsp.symm, eq_iff_iff]
+    unfold Col at hcol1 ⊢
+    constructor
+    ·   intro hcol2; rcases hcol1 with h1 | h1 | h1 <;> rcases hcol2 with h2 | h2 | h2
+        ·   rw [← or_assoc]; apply Or.inl; simp [btwn_symm_iff]
+            exact xzw_or_xwz_of_ne_xyz_xyw hpq h1 h2
+        ·   rw [btwn_symm_iff] at h2; apply Or.inr ∘ Or.inl; symm
+            exact xyw_of_xyz_xzw h2 h1
+        ·   apply Or.inr ∘ Or.inr; exact xyw_of_xyz_yzw_ne h2 h1 hpq
+        ·   apply Or.inl; exact xyw_of_xyz_xzw h1.symm h2
+        ·   rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
+            exact xyz_or_xzy_of_xyw_xzw h1.symm h2.symm
+        ·   apply Or.inr ∘ Or.inr; exact xyz_of_xyw_yzw h2 h1.symm
+        ·   apply Or.inr ∘ Or.inr ∘ btwn_symm
+            exact xyw_of_xyz_yzw_ne h1 h2 hpq
+        ·   apply Or.inr ∘ Or.inr ∘ btwn_symm
+            exact xyz_of_xyw_yzw h1 h2.symm
+        ·   rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
+            exact yzw_or_ywz_of_ne_xyz_xyw hpq.symm h1.symm h2.symm
+    ·   intro hcol2; rcases hcol1 with h1 | h1 | h1 <;> rcases hcol2 with h2 | h2 | h2
+        ·   apply Or.inl; exact xyw_of_xyz_xzw h1 h2
+        ·   rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
+            exact xyz_or_xzy_of_xyw_xzw h1 h2.symm
+        ·   apply Or.inr ∘ Or.inr; exact xyz_of_xyw_yzw h2 h1
+        ·   rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
+            exact xzw_or_xwz_of_ne_xyz_xyw hsp.symm h1.symm h2
+        ·   apply Or.inr ∘ Or.inl; exact xzw_of_xyw_yzw h1 h2
+        ·   apply Or.inr ∘ Or.inr; exact (xzw_of_xyz_yzw_ne h1 h2.symm hsp).symm
+        ·   apply Or.inr ∘ Or.inr; symm at h2
+            exact xzw_of_xyz_yzw_ne h2 h1 hsp
+        ·   apply Or.inr ∘ Or.inr; exact yzw_of_xyz_xzw h2 h1
+        ·   symm at h2; rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
+            exact yzw_or_ywz_of_ne_xyz_xyw hsp h1 h2
+
+
+
 
 end Geom
 end Ch6
