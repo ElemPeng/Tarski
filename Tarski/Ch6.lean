@@ -103,7 +103,8 @@ different from a; Ray defines its equivalence classes which are halflines
 
 def Ray {G : Geom} (a p : Point) : PSet G := a.sameside p
 -- note : a.sameside p x enforces p ≠ a and x ≠ a
-def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, K = Ray a p
+-- IsRay needs to enforce a ≠ p otherwise the empty set is a ray
+def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, a ≠ p ∧ K = Ray a p
 
 -- Def 6.9. Halflines H(ap) H(aq) originating from a are called
 -- opposites if B p a q (here Ray a p and Ray a q are opposite rays)
