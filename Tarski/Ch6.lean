@@ -101,7 +101,7 @@ different from a; Ray defines its equivalence classes which are halflines
 (or Rays)
 -/
 
-def Ray {G : Geom} (a p : Point) : Point → Prop := a.sameside p
+def Ray {G : Geom} (a p : Point) : PSet G := a.sameside p
 
 def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, p ≠ a ∧ K = Ray a p
 
@@ -118,14 +118,14 @@ theorem narboux_lemma_ss {G : Geom} {a x y : Point} :
     ·   exact (narboux_lemma h he.symm).symm
 
 theorem ray_sgmt_const {G : Geom} (a r b c : Point) : a ≠ r → b ≠ c →
-    ∃ x, a.sameside r x ∧ E a x b c := by
+    ∃ x, x ∈ (Ray a r) ∧ E a x b c := by
     intro har hbc; have ⟨z, hz1, hz2⟩ := sgmt_const' r a
     have ⟨x, hx1, hx2⟩ := sgmt_const z a b c; refine ⟨x, ?_, hx2⟩
-    unfold Point.sameside; refine ⟨har.symm, (E_id_mt hbc hx2).symm, ?_⟩
+    refine ⟨har.symm, (E_id_mt hbc hx2).symm, ?_⟩
     exact yzw_or_ywz_of_ne_xyz_xyw hz2.symm hz1.symm hx1
 
 theorem unique_ray_sgmt_const {G : Geom} {a r b c x y : Point} :
-    a.sameside r x → E a x b c → a.sameside r y → E a y b c → x = y := by
+    x ∈ Ray a r → E a x b c → a.sameside r y → E a y b c → x = y := by
     intro hssrx haxbc hssry haybc; have haxay := E_trans haxbc haybc.symm
     have hssxy : a.sameside x y := ss_trans hssrx.symm hssry
     exact narboux_lemma_ss hssxy haxay
@@ -150,15 +150,15 @@ theorem baxy_iff_le_of_ss {G : Geom} {a x y : Point} : a.sameside x y →
 /- Def 6.14 : for distinct points p and q define the line pq to be
     the set L(pq) := {x : Col x p q}-/
 
-def Line {G : Geom} (p q : Point) : Point → Prop := fun x ↦ Col x p q
+def Line {G : Geom} (p q : Point) : PSet G := fun x ↦ Col p q x
 
 def isLine {G : Geom} (L : Point → Prop) : Prop := ∃ p q : Point, (p ≠ q) ∧ L = Line p q
 
 -- Satz 6.15. The Line pq is the union of the rays formed by p and q from some point a
 -- along with the point a itself
 
-theorem line_of_rays {G : Geom} {p q r : Point} : p ≠ q → p ≠ r → B q p r →
-    ∀ x, Line p q x ↔ ((Ray p q x) ∨ (x = p) ∨ (Ray p r x)) := by
+theorem line_of_rays {G : Geom} {a p q : Point} : a ≠ p → a ≠ q → B p a q →
+    ∀ x, x ∈ Line p q ↔ ((x ∈ Ray a p) ∨ (x = a) ∨ (x ∈ Ray a q)) := by
     intro hpq hpr hqpr x; constructor
     ·   sorry
     ·   sorry

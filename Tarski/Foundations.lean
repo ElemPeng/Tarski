@@ -49,3 +49,9 @@ class Geom where
     sgmt_const (x y a b : Point) : ∃ z, B x y z ∧ E y z a b --beeson A4
 
 -- Satz numbering based on Michael Beeson's Tarski Formalization Project
+namespace Geom
+
+def PSet (G : Geom) := Point → Prop
+instance {G : Geom} : Membership Point (PSet G ) where mem A x := A x
+
+end Geom
