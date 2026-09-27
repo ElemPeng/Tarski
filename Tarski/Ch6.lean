@@ -158,7 +158,7 @@ theorem baxy_iff_le_of_ss {G : Geom} {a x y : Point} : a.sameside x y →
 
 def Line {G : Geom} (p q : Point) : PSet G := fun x ↦ p ≠ q ∧ Col p q x
 
-def isLine {G : Geom} (L : Point → Prop) : Prop := ∃ p q : Point, L = Line p q
+def IsLine {G : Geom} (L : Point → Prop) : Prop := ∃ p q : Point, p ≠ q ∧ L = Line p q
 
 -- Satz 6.15. The Line pq is the union of the rays formed by p and q from some point a
 -- along with the point a itself
@@ -239,12 +239,56 @@ theorem line_eq {G : Geom} {p q s : Point} :
             exact yzw_or_ywz_of_ne_xyz_xyw hsp h1 h2
 
 -- Satz 6.17
-theorem line_symm {G : Geom} {p q : Point} :
-    p ≠ q → p ∈ Line p q ∧ q ∈ Line p q ∧ Line p q = Line q p := by
-    intro hpq; refine ⟨?_, ?_, ?_⟩
+
+theorem line_gen_pt_mem {G : Geom} {p q : Point} :
+    p ≠ q → p ∈ Line p q ∧ q ∈ Line p q := by
+    intro hpq; refine ⟨?_, ?_⟩
     ·   exact ⟨hpq, col_triv_xyx⟩
     ·   exact ⟨hpq, col_triv_xyy⟩
-    ·   unfold Line; simp [hpq, hpq.symm, col_xy_iff]; rfl
+
+theorem line_symm {G : Geom} {p q : Point} :
+    p ≠ q → Line p q = Line q p := by
+    intro hpq; unfold Line; simp [hpq, hpq.symm, col_xy_iff]; rfl
+
+@[symm] theorem mem_line_symm {G : Geom} {x p q : Point} : x ∈ Line p q → x ∈ Line q p := by
+    intro h; rwa [← (line_symm h.1)]
+
+theorem mem_line_symm_iff {G : Geom} {x p q : Point} : x ∈ Line p q ↔ x ∈ Line q p :=
+    Iff.intro (mem_line_symm) (mem_line_symm)
+
+-- Satz 6.18
+theorem line_pq_ext {G : Geom} {L : PSet G} {p q : Point} :
+    IsLine L → p ≠ q → p ∈ L → q ∈ L → L = Line p q := by
+    intro ⟨p', q', _, hL'⟩ hpq hpL hqL; subst hL'
+    by_cases hp'p : p' = p
+    ·   subst hp'p; exact line_eq (hpq.symm) hqL
+    by_cases hq'q : q' = q
+    ·   rw [hq'q] at hpL ⊢; rw [(line_symm hpq), (line_symm hpL.1)]
+        apply line_eq hpq (mem_line_symm hpL)
+    by_cases hq'p : q' = p
+    ·   rw [← hq'p] at hp'p ⊢; rw [(line_symm hp'p)]
+        apply line_eq (Ne.symm hq'q) (mem_line_symm hqL)
+    by_cases hqp' : q = p'
+    ·   rw [hqp'] at ⊢; rw [←(line_symm hp'p)]
+        exact line_eq (Ne.symm hp'p) hpL
+    have h : Line p' q' = Line p' q := line_eq hqp' hqL
+    rw [h, (line_symm (Ne.symm hqp')), (line_symm hpq)]
+    rw [h, mem_line_symm_iff] at hpL
+    exact line_eq hpq hpL
+
+-- Satz 6.19
+theorem line_incid {G : Geom} {p q : Point} : p ≠ q →
+    ∃ L : PSet G, IsLine L ∧ p ∈ L ∧ q ∈ L :=
+    fun hpq ↦ ⟨Line p q, ⟨p, q, hpq, rfl⟩ , line_gen_pt_mem hpq⟩
+
+theorem line_incid_unique {G : Geom} {p q : Point} : p ≠ q → ∀ A B : PSet G,
+IsLine A → IsLine B → p ∈ A → p ∈ B → q ∈ A → q ∈ B → A = B :=
+    fun hpq _ _ hA hB hpA hpB hqA hqB ↦
+        (line_pq_ext hB hpq hpB hqB) ▸ (line_pq_ext hA hpq hpA hqA)
+
+
+
+
 
 end Geom
 end Ch6
