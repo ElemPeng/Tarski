@@ -61,6 +61,9 @@ theorem col_and_not_os_of_ss {G : Geom} {x y a : Point} :
         ·   exact hya (eq_of_xyz_xzy h' hxay)
         ·   exact hxa (eq_of_xyz_xzy h' hxay.symm)
 
+theorem Point.sameside.col {G : Geom} {a x y : Point} (h : a.sameside x y) : Col x a y :=
+    (col_and_not_os_of_ss h).1
+
 theorem ss_of_col_of_not_os {G : Geom} {x y a : Point} :
     Col x a y → ¬ (B x a y) → a.sameside x y := by
     intro hcol hxay; have ⟨hax, hya⟩ := dist_of_not_btwn hxay
@@ -71,15 +74,18 @@ theorem ss_iff_col_and_not_os {G : Geom} {x y a : Point} :
     a.sameside x y ↔ Col x a y ∧ ¬ (B x a y) :=
     Iff.intro col_and_not_os_of_ss <| fun ⟨h1, h2⟩ ↦ ss_of_col_of_not_os h1 h2
 
--- Satz 6.5
+-- Satz 6.5 Reflexivitat
 theorem ss_refl {G : Geom} {a x : Point} : x ≠ a → a.sameside x x :=
     fun h ↦ ⟨h, h, Or.inl btwn_refl'⟩
 
--- Satz 6.6
+-- Satz 6.6 Symmetrie
 theorem ss_symm {G : Geom} {a x y : Point} : a.sameside x y → a.sameside y x :=
     fun ⟨hx, hy, h⟩ ↦ ⟨hy, hx, h.symm⟩
 
--- Satz 6.7
+theorem Point.sameside.symm {G : Geom} {a x y : Point} (h : a.sameside x y) :
+    a.sameside y x := ss_symm h
+
+-- Satz 6.7 Transitivitat
 theorem ss_trans {G : Geom} {a x y z : Point} :
     a.sameside x y → a.sameside y z → a.sameside x z := by
     intro ⟨hx, hy, hxy⟩ ⟨_, hz, hyz⟩; refine ⟨hx, hz, ?_⟩
@@ -89,6 +95,73 @@ theorem ss_trans {G : Geom} {a x y z : Point} :
     ·   exact xzw_or_xwz_of_ne_xyz_xyw (hy.symm) h1 h2
     ·   exact Or.inr (xyw_of_xyz_xzw h2 h1)
 
+-- Def 6.8
+/- the relation fun x ↦ a.sameside p x is an equivalence relation on the points
+different from a; Ray defines its equivalence classes which are halflines
+(or Rays)
+-/
+
+def Ray {G : Geom} (a p : Point) : Point → Prop := a.sameside p
+
+def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, p ≠ a ∧ K = Ray a p
+
+-- Def 6.9. Halflines H(ap) H(aq) originating from a are called
+-- opposites if B p a q
+
+/- Satz 6.11 : for every Ray a r and distinct points b and c, there is a unique
+   point x on Ray a r so that ax ≡ bc
+-/
+theorem narboux_lemma_ss {G : Geom} {a x y : Point} :
+    a.sameside x y → E a x a y → x = y := by
+    intro ⟨_, _, hb⟩ he; rcases hb with h | h
+    ·   exact narboux_lemma h he
+    ·   exact (narboux_lemma h he.symm).symm
+
+theorem ray_sgmt_const {G : Geom} (a r b c : Point) : a ≠ r → b ≠ c →
+    ∃ x, a.sameside r x ∧ E a x b c := by
+    intro har hbc; have ⟨z, hz1, hz2⟩ := sgmt_const' r a
+    have ⟨x, hx1, hx2⟩ := sgmt_const z a b c; refine ⟨x, ?_, hx2⟩
+    unfold Point.sameside; refine ⟨har.symm, (E_id_mt hbc hx2).symm, ?_⟩
+    exact yzw_or_ywz_of_ne_xyz_xyw hz2.symm hz1.symm hx1
+
+theorem unique_ray_sgmt_const {G : Geom} {a r b c x y : Point} :
+    a.sameside r x → E a x b c → a.sameside r y → E a y b c → x = y := by
+    intro hssrx haxbc hssry haybc; have haxay := E_trans haxbc haybc.symm
+    have hssxy : a.sameside x y := ss_trans hssrx.symm hssry
+    exact narboux_lemma_ss hssxy haxay
+/-  Def 6.12 : If z is this point, we also say that z is obtained by laying
+    off the segment bc from a in the direction of r—or, more precisely,
+    along the ray defined by r (i.e., on H(ar)). (thanks google translate)-/
+
+-- Satz 6.13
+
+theorem baxy_of_ss_le {G : Geom} {a x y : Point} : a.sameside x y → le a x a y → B a x y := by
+    intro hss ⟨x', hx'1, hx'2⟩; have hss2 : a.sameside x' y :=
+    ⟨E_id_mt hss.1.symm hx'2.symm.l, hss.2.1, Or.inl hx'1⟩
+    have hxx' : x = x' := unique_ray_sgmt_const (hss.symm) E_refl hss2.symm hx'2.symm
+    exact hxx' ▸ hx'1
+
+theorem le_of_ss_baxy {G : Geom} {a x y : Point} : a.sameside x y → B a x y → le a x a y :=
+    fun _ hb ↦ le_of_btwn_left hb
+
+theorem baxy_iff_le_of_ss {G : Geom} {a x y : Point} : a.sameside x y →
+    (le a x a y ↔ B a x y) := fun hss ↦ Iff.intro (baxy_of_ss_le hss) (le_of_ss_baxy hss)
+
+/- Def 6.14 : for distinct points p and q define the line pq to be
+    the set L(pq) := {x : Col x p q}-/
+
+def Line {G : Geom} (p q : Point) : Point → Prop := fun x ↦ Col x p q
+
+def isLine {G : Geom} (L : Point → Prop) : Prop := ∃ p q : Point, (p ≠ q) ∧ L = Line p q
+
+-- Satz 6.15. The Line pq is the union of the rays formed by p and q from some point a
+-- along with the point a itself
+
+theorem line_of_rays {G : Geom} {p q r : Point} : p ≠ q → p ≠ r → B q p r →
+    ∀ x, Line p q x ↔ ((Ray p q x) ∨ (x = p) ∨ (Ray p r x)) := by
+    intro hpq hpr hqpr x; constructor
+    ·   sorry
+    ·   sorry
 
 end Geom
 end Ch6
