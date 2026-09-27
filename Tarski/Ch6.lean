@@ -206,21 +206,20 @@ theorem line_eq {G : Geom} {p q s : Point} :
     s ≠ p → s ∈ Line p q → (Line p q = Line p s) := by
     intro hsp ⟨hpq, hcol1⟩; unfold Line; funext z
     simp only [ne_eq, hpq, not_false_eq_true, true_and, hsp.symm, eq_iff_iff]
-    unfold Col at hcol1 ⊢
-    constructor
+    unfold Col at hcol1 ⊢; constructor
     ·   intro hcol2; rcases hcol1 with h1 | h1 | h1 <;> rcases hcol2 with h2 | h2 | h2
         ·   rw [← or_assoc]; apply Or.inl; simp [btwn_symm_iff]
             exact xzw_or_xwz_of_ne_xyz_xyw hpq h1 h2
-        ·   rw [btwn_symm_iff] at h2; apply Or.inr ∘ Or.inl; symm
+        ·   symm at h2; apply Or.inr ∘ Or.inl; symm
             exact xyw_of_xyz_xzw h2 h1
         ·   apply Or.inr ∘ Or.inr; exact xyw_of_xyz_yzw_ne h2 h1 hpq
         ·   apply Or.inl; exact xyw_of_xyz_xzw h1.symm h2
         ·   rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
             exact xyz_or_xzy_of_xyw_xzw h1.symm h2.symm
         ·   apply Or.inr ∘ Or.inr; exact xyz_of_xyw_yzw h2 h1.symm
-        ·   apply Or.inr ∘ Or.inr ∘ btwn_symm
+        ·   apply Or.inr ∘ Or.inr; symm
             exact xyw_of_xyz_yzw_ne h1 h2 hpq
-        ·   apply Or.inr ∘ Or.inr ∘ btwn_symm
+        ·   apply Or.inr ∘ Or.inr; symm
             exact xyz_of_xyw_yzw h1 h2.symm
         ·   rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
             exact yzw_or_ywz_of_ne_xyz_xyw hpq.symm h1.symm h2.symm
@@ -239,8 +238,13 @@ theorem line_eq {G : Geom} {p q s : Point} :
         ·   symm at h2; rw [←or_assoc]; apply Or.inl; simp [btwn_symm_iff]
             exact yzw_or_ywz_of_ne_xyz_xyw hsp h1 h2
 
-
-
+-- Satz 6.17
+theorem line_symm {G : Geom} {p q : Point} :
+    p ≠ q → p ∈ Line p q ∧ q ∈ Line p q ∧ Line p q = Line q p := by
+    intro hpq; refine ⟨?_, ?_, ?_⟩
+    ·   exact ⟨hpq, col_triv_xyx⟩
+    ·   exact ⟨hpq, col_triv_xyy⟩
+    ·   unfold Line; simp [hpq, hpq.symm, col_xy_iff]; rfl
 
 end Geom
 end Ch6

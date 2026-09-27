@@ -126,6 +126,8 @@ theorem col_triv_xxy {G : Geom} {x y : Point} : Col x x y := by
 theorem col_triv_xyx {G : Geom} {x y : Point} : Col x y x := by
     unfold Col; exact Or.inr (Or.inr btwn_refl)
 
+theorem col_triv_xyy {G : Geom} {x y : Point} : Col x y y := Col.xz col_triv_xxy
+
 -- Satz 4.14
 theorem col_of_col_e3 {G : Geom} {x y z x' y' z' : Point} :
     Col x y z → E3 x y z x' y' z' → Col x' y' z' := by
