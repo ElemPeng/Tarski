@@ -104,8 +104,10 @@ different from a; Ray defines its equivalence classes which are halflines
 def Ray {G : Geom} (a p : Point) : PSet G := a.sameside p
 -- note : a.sameside p x enforces p ≠ a and x ≠ a
 -- IsRay needs to enforce a ≠ p otherwise the empty set is a ray
-def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, a ≠ p ∧ K = Ray a p
+def IsRay {G : Geom} (K : Point → Prop) : Prop := ∃ a p, p ≠ a ∧ K = Ray a p
 
+theorem ray_is_ray {G : Geom} {a p : Point} : p ≠ a → IsRay (Ray a p) :=
+    fun hpa ↦ ⟨a, p, hpa, rfl⟩
 -- Def 6.9. Halflines H(ap) H(aq) originating from a are called
 -- opposites if B p a q (here Ray a p and Ray a q are opposite rays)
 
@@ -160,6 +162,9 @@ theorem baxy_iff_le_of_ss {G : Geom} {a x y : Point} : a.sameside x y →
 def Line {G : Geom} (p q : Point) : PSet G := fun x ↦ p ≠ q ∧ Col p q x
 
 def IsLine {G : Geom} (L : Point → Prop) : Prop := ∃ p q : Point, p ≠ q ∧ L = Line p q
+
+theorem line_is_line {G : Geom} {p q : Point} : p ≠ q → IsLine (Line p q) :=
+    fun hpq ↦ ⟨p, q, hpq, rfl⟩
 
 -- Satz 6.15. The Line pq is the union of the rays formed by p and q from some point a
 -- along with the point a itself
@@ -286,6 +291,45 @@ theorem line_incid_unique {G : Geom} {p q : Point} : p ≠ q → ∀ A B : PSet 
 IsLine A → IsLine B → p ∈ A → p ∈ B → q ∈ A → q ∈ B → A = B :=
     fun hpq _ _ hA hB hpA hpB hqA hqB ↦
         (line_pq_ext hB hpq hpB hqB) ▸ (line_pq_ext hA hpq hpA hqA)
+
+-- Satz 6.21
+theorem unique_isect_pt {G : Geom} {A B : PSet G} {x y : Point} :
+IsLine A → IsLine B → A ≠ B → x ∈ A → x ∈ B → y ∈ A → y ∈ B → x = y :=
+    fun hA hB hAB hxA hxB hyA hyB ↦
+     Classical.not_not.mp (mt (fun h ↦ line_incid_unique h A B hA hB hxA hxB hyA hyB) hAB)
+
+-- Def 6.22
+def Point.IsectPt {G : Geom} (x : Point) (A B : PSet G) :=
+    IsLine A ∧ IsLine B ∧ A ≠ B ∧ x ∈ A ∧ x ∈ B
+
+-- Satz 6.23
+theorem col_iff_on_same_line {G : Geom} {a b c : Point} : Col a b c ↔
+∃ A : PSet G, (IsLine A ∧ a ∈ A ∧ b ∈ A ∧ c ∈ A) := by
+    by_cases hab : a = b
+    ·   subst hab; simp only [col_triv_xxy, and_self_left, true_iff]
+        by_cases hac : a = c
+        ·   subst hac; have ⟨d, had⟩ := another_pt a; simp only [and_self]
+            exact ⟨Line a d, line_is_line had, (line_gen_pt_mem had).1⟩
+        exact ⟨Line a c, line_is_line hac, (line_gen_pt_mem hac)⟩
+    constructor
+    ·   exact fun hcol ↦ ⟨Line a b, line_is_line hab, (line_gen_pt_mem hab).1,
+        (line_gen_pt_mem hab).2, hab, hcol⟩
+    ·   intro ⟨A, hA, haA, hbA, hcA⟩
+        have hA' : A = Line a b := line_pq_ext hA hab haA hbA
+        subst hA'; exact hcA.2
+
+-- Satz 6.24
+theorem at_least_2d {G : Geom} : ∃ a b c : Point, ¬(Col a b c) := by
+    have ⟨a, b, c, h⟩ := lo_dim; refine ⟨a, b, c, ?_⟩
+    unfold Col; simpa [not_or]
+
+-- Satz 6.25
+theorem ext_of_Lab {G : Geom} {a b : Point} : a ≠ b → ∃ c, c ∉ Line a b := by
+    intro hab; apply Classical.byContradiction; intro h; rw [Classical.not_exists_not] at h
+    refine absurd (at_least_2d (G := G)) ?_; simp [not_exists]
+    intro x y z; have hxL := h x; have hyL := h y; have hzL := h z
+    rw [col_iff_on_same_line]; exact ⟨Line a b, line_is_line hab, hxL, hyL, hzL⟩
+
 
 
 

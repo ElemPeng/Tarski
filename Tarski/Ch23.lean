@@ -155,6 +155,12 @@ theorem three_dist (G : Geom) : ∃ a b c : Point, a ≠ b ∧ b ≠ c ∧ a ≠
 theorem two_dist (G : Geom) : ∃ a b : Point, a ≠ b := by
     have ⟨a, b, _, h, _⟩ := G.three_dist; exact ⟨a, b, h⟩
 
+theorem another_pt {G : Geom} (a : Point) : ∃ b : Point, a ≠ b := by
+    have ⟨b, b', hbb'⟩ := two_dist G
+    by_cases h: a = b
+    ·   subst h; exact ⟨b', hbb'⟩
+    exact ⟨b, h⟩
+
 -- Satz 3.14ab, essentially
 /-  Beeson defines three specific α β γ that are not collinear; then shows that they are unEual
     These results shows that if you use segment construction to construct a segment from y on the
