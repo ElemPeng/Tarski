@@ -161,6 +161,9 @@ theorem another_pt {G : Geom} (a : Point) : ∃ b : Point, a ≠ b := by
     ·   subst h; exact ⟨b', hbb'⟩
     exact ⟨b, h⟩
 
+theorem btwn_id_mt {G : Geom} {x y z : Point} : x ≠ y → B x y z → x ≠ z := by
+    intro h1 h2 h3; subst h3; exact h1 <| btwn_id h2
+
 -- Satz 3.14ab, essentially
 /-  Beeson defines three specific α β γ that are not collinear; then shows that they are unEual
     These results shows that if you use segment construction to construct a segment from y on the
