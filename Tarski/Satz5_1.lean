@@ -41,7 +41,7 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
     have hyzw' : B y z w' := yzw_of_xyz_xzw hxyz hw'1
     have hwz'y' : B w z' y' := yzw_of_xyz_xzw hz'1 hy'1
     have he3 : E w' z' w z :=
-      five_sgmt hyz hyzw' hwz'y'.symm hy'2.lr.symm (E_trans hw'2 hz'2.symm.r) he1 E_comm
+      outer_five_sgmt hyz hyzw' hwz'y'.symm hy'2.lr.symm (E_trans hw'2 hz'2.symm.r) he1 E_comm
 -- use inner pasch
     have ⟨e, hzez', hwew'⟩ := inner_pasch hyzw'.symm hywz'.symm
 -- use inner_five_sgmt to get E e z e z' with w e w' z w e w' z'
@@ -61,7 +61,7 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
     have ⟨q, hprq, he6⟩ := sgmt_const p r r p
 -- use five_sgmt with B w' z r p and p z e w' to get E r p e w'
     have hrpew' : E r p e w' :=
-      five_sgmt (Ne.symm hzw') hw'zr (xyz_of_xyw_yzw hz'zp.symm hzez') he4.lr.symm he5 E_comm he4
+      outer_five_sgmt (Ne.symm hzw') hw'zr (xyz_of_xyw_yzw hz'zp.symm hzez') he4.lr.symm he5 E_comm he4
     have hrqew : E r q e w := E_trans (E_trans he6 hrpew') hewew'.symm
 -- get E w w' p q; then it suffices that p = q
     have hww'pq : E w w' q p := sgmt_add hwew' hprq.symm hrqew.symm.lr hrpew'.symm
@@ -71,7 +71,7 @@ x ≠ y → B x y z → B x y w → (B x z w ∨ B x w z) := by
     · subst hw'e; have hpr : p = r := E_id hrpew'.l; subst hpr
       exact E_id he6
     have hwzqz : E w z q z :=
-      five_sgmt (hw'e) hwew'.symm hprq hrpew'.symm.lr hrqew.symm he4.symm.lr he5.lr.symm
+      outer_five_sgmt (hw'e) hwew'.symm hprq hrpew'.symm.lr hrqew.symm he4.symm.lr he5.lr.symm
 -- get E z p z q
     have hzpzq : E z p z q := E_trans (E_trans he4 hw'2) hwzqz.lr
 -- show r ≠ z

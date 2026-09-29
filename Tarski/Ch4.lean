@@ -26,10 +26,10 @@ theorem inner_five_sgmt {G : Geom} {x y z u x' y' z' u' : Point} : B x y z → B
     have ⟨w, hw1, heq2⟩ := sgmt_const' x z
     have ⟨w', hw'1, he6⟩ := sgmt_const x' z' z w
     have he5 : E x z x' z' := sgmt_add hb1 hb'1 he1 he2
-    have he7 : E w u w' u' := five_sgmt heq hw1 hw'1 he5 he6.symm he3 he4
+    have he7 : E w u w' u' := outer_five_sgmt heq hw1 hw'1 he5 he6.symm he3 he4
     have hb2 : B w z y := (yzw_of_xyz_xzw hb1 hw1).symm
     have hb'2 : B w' z' y' := (yzw_of_xyz_xzw hb'1 hw'1).symm
-    apply five_sgmt heq2.symm hb2 hb'2 he6.lr.symm he2.lr he7 he4
+    apply outer_five_sgmt heq2.symm hb2 hb'2 he6.lr.symm he2.lr he7 he4
 
 -- Satz 4.3: segment subtraction
 /-  Same trick as above; if y = z we're done, so assume y ≠ z and extend ray yz
@@ -48,11 +48,23 @@ theorem sgmt_sub {G : Geom} {x y z x' y' z' : Point} : B x y z → B x' y' z' �
     have he4 : E x w x' w' := sgmt_add hb3 hb'3 he1 he3
     rw [btwn_symm_iff] at hb2 hb'2
     rw [E_flip_both_iff] at he1 he2 he3 he4 ⊢
-    apply five_sgmt heq2.symm hb2 hb'2 he3 he2 he4 he1
+    apply outer_five_sgmt heq2.symm hb2 hb'2 he3 he2 he4 he1
 
 
 -- this is definition 4.3 in Beeson (basically side side side premises?)
 def E3 {G : Geom} (x y z a b c : Point) := E x y a b ∧ E y z b c ∧ E x z a c
+
+theorem E3.xy {G : Geom} {x y z a b c : Point} (h : E3 x y z a b c) : E3 y x z b a c := by
+    obtain ⟨h1, h2, h3⟩ := h; exact ⟨h1.lr, h3, h2⟩
+
+theorem E3.yz {G : Geom} {x y z a b c : Point} (h : E3 x y z a b c) : E3 x z y a c b := by
+    obtain ⟨h1, h2, h3⟩ := h; exact ⟨h3, h2.lr ,h1⟩
+
+theorem E3.xz {G : Geom} {x y z a b c : Point} (h : E3 x y z a b c) : E3 z y x c b a := h.xy.yz.xy
+
+theorem E3.l {G : Geom} {x y z a b c : Point} (h : E3 x y z a b c) : E3 y z x b c a := h.xz.xy
+
+theorem E3.r {G : Geom} {x y z a b c : Point} (h : E3 x y z a b c) : E3 z x y c a b := h.xz.yz
 
 -- Satz 4.5
 /-  if ac ≡ a'c' and B a b c there is some b' so that B a' b' c'
@@ -80,7 +92,7 @@ theorem btwn_of_btwn_e3 {G : Geom} {x y z x' y' z' : Point} :
     intro hb ⟨he1, he2, he3⟩; have ⟨z'', hz'1, hz'2⟩ := sgmt_const x' y' y z
     by_cases h : x' = y'
     · subst h; exact btwn_refl
-    have h' : E z'' z' z z := five_sgmt h hz'1 hb he1.symm hz'2 he3.symm he2.symm
+    have h' : E z'' z' z z := outer_five_sgmt h hz'1 hb he1.symm hz'2 he3.symm he2.symm
     exact (E_id h')▸ hz'1
 
 -- this is definition 4.10 in Beeson
@@ -128,7 +140,13 @@ theorem col_triv_xyx {G : Geom} {x y : Point} : Col x y x := by
 
 theorem col_triv_xyy {G : Geom} {x y : Point} : Col x y y := Col.xz col_triv_xxy
 
--- Satz 4.14
+--- not a theorem in the text but helpful
+theorem dist_of_not_col {G : Geom} {a b c : Point} : ¬(Col a b c) → a ≠ b ∧ b ≠ c ∧ a ≠ c := by
+    intro htri; refine ⟨?_, ?_, ?_⟩ <;> intro h <;> subst h
+    · exact htri col_triv_xxy
+    · exact htri col_triv_xyy
+    · exact htri col_triv_xyx
+-- Satz 4.13
 theorem col_of_col_e3 {G : Geom} {x y z x' y' z' : Point} :
     Col x y z → E3 x y z x' y' z' → Col x' y' z' := by
     intro hcol ⟨he1, he2, he3⟩; rcases hcol with h' | h' | h'
@@ -136,7 +154,7 @@ theorem col_of_col_e3 {G : Geom} {x y z x' y' z' : Point} :
     ·   exact (btwn_of_btwn_e3 h' ⟨he2, he3.lr, he1.lr⟩).col.r
     ·   exact (btwn_of_btwn_e3 h' ⟨he3.lr, he1, he2.lr⟩).col.l
 
--- Satz 4.15
+-- Satz 4.14
 theorem e3_of_col_eq {G : Geom} {x y z x' y' : Point} : Col x y z → E x y x' y' →
     ∃ z', E3 x y z x' y' z' := by
     intro hcol he1; rcases hcol with h' | h' | h'
@@ -150,23 +168,23 @@ theorem e3_of_col_eq {G : Geom} {x y z x' y' : Point} : Col x y z → E x y x' y
         exact ⟨z', he1, he3.lr, he2.symm⟩
 
 -- Satz 4.16 (I thought this was pretty straightforward)
-theorem sgmt_extend {G : Geom} {x y z w x' y' z' w' : Point} :
+theorem five_sgmt {G : Geom} {x y z w x' y' z' w' : Point} :
 x ≠ y → Col x y z → E3 x y z x' y' z' → E x w x' w' → E y w y' w' → E z w z' w' := by
     intro hne1 hcol ⟨he1, he2, he3⟩ he4 he5
     rcases hcol with hb1 | hb1 | hb1
     ·   have hb'1 := btwn_of_btwn_e3 hb1 ⟨he1, he2, he3⟩
-        exact five_sgmt hne1 hb1 hb'1 he1 he2 he4 he5
+        exact outer_five_sgmt hne1 hb1 hb'1 he1 he2 he4 he5
     ·   have hb'1 := btwn_of_btwn_e3 hb1 ⟨he2, he3.lr, he1.lr⟩
         exact inner_five_sgmt hb1 hb'1 he2 he3.lr he5 he4
     ·   have hb'1 := btwn_of_btwn_e3 hb1 ⟨he3.lr, he1, he2.lr⟩
-        exact five_sgmt hne1.symm hb1.symm hb'1.symm he1.lr he3 he5 he4
+        exact outer_five_sgmt hne1.symm hb1.symm hb'1.symm he1.lr he3 he5 he4
 
 theorem e3_triv {G : Geom} (x y z : Point) : E3 x y z x y z := ⟨E_refl, E_refl, E_refl⟩
 
 -- Satz 4.17; a converse of hi_dim
 theorem E_of_ne_col_E {G : Geom} {x y z u v : Point} : x ≠ y → Col x y z →
     E x u x v → E y u y v → E z u z v :=
-    fun hne1 hcol he1 he2 ↦ sgmt_extend hne1 hcol (e3_triv x y z) he1 he2
+    fun hne1 hcol he1 he2 ↦ five_sgmt hne1 hcol (e3_triv x y z) he1 he2
 
 -- Satz 4.18
 theorem eq_of_ne_col_E {G : Geom} {x y z z' : Point} : x ≠ y →

@@ -54,7 +54,7 @@ theorem sgmt_add {G : Geom} {x y z x' y' z' : Point} : B x y z → B x' y' z' �
     intro hb1 hb2 he1 he2; apply E_flip_both; by_cases h : x = y
     ·   subst h; have he1 := he1.symm; have he2 := he2.symm
         have hx'y' : x' = y' := E_id he1; subst hx'y'; exact (he2.lr.symm)
-    apply five_sgmt h (hb1) hb2 he1 he2 (degen_sgmts) (he1.lr)
+    apply outer_five_sgmt h (hb1) hb2 he1 he2 (degen_sgmts) (he1.lr)
 
 --- Satz 2.12
 theorem unique_sgmt_const {G : Geom} {q a x b c y : Point} :
@@ -62,7 +62,7 @@ theorem unique_sgmt_const {G : Geom} {q a x b c y : Point} :
         intro hne hb1 he1 hb2 he2
         have h1 : E a x a y := E_trans he1 he2.symm
         have h2 : E x y y y :=
-            five_sgmt hne hb1 hb2 E_refl h1 E_refl E_refl
+            outer_five_sgmt hne hb1 hb2 E_refl h1 E_refl E_refl
         exact E_id h2
 
 end Geom
@@ -117,7 +117,7 @@ theorem yzw_of_xyz_xzw {G : Geom} {x y z w : Point} : B x y z → B x z w → B 
 theorem xzw_of_xyz_yzw_ne {G : Geom} {x y z w} : B x y z → B y z w → y ≠ z → B x z w := by
     intro hb1 hb2 hne; have ⟨a, ha1, ha2⟩ : ∃ a, B x z a ∧ E z a z w := sgmt_const x z z w
     have hb3 : B y z a := yzw_of_xyz_xzw hb1 ha1
-    have he1 : E w a a a := five_sgmt hne hb2 hb3 (E_refl) (ha2).symm (E_refl) (E_refl)
+    have he1 : E w a a a := outer_five_sgmt hne hb2 hb3 (E_refl) (ha2).symm (E_refl) (E_refl)
     exact (E_id he1) ▸ ha1
 
 -- Satz 3.5b

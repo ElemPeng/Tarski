@@ -38,24 +38,183 @@ noncomputable def Point.R {G : Geom} (a : Point) : Point → Point := fun p ↦
   Exists.choose (refl_thru_pt a p)
 
 -- Satz 7.6
-theorem eq_aRp_of_pt_reflect {G : Geom} {a p q: Point} : M p a q → a.R p = q := by
+theorem aRp_q_of_Mpaq {G : Geom} {a p q: Point} : M p a q → a.R p = q := by
   intro h; unfold Point.R; let P := refl_thru_pt a p; symm
   apply unique_refl_thru_pt p q (Exists.choose P) h (Exists.choose_spec P)
 
-theorem pt_reflect_of_eq_aRp {G : Geom} {a p q: Point} : a.R p = q → M p a q := by
+theorem Mpaq_of_aRp_q {G : Geom} {a p q: Point} : a.R p = q → M p a q := by
   intro h; unfold Point.R at h; rw [←h]; exact Exists.choose_spec (refl_thru_pt a p)
 
-theorem eq_aRp_iff_pt_reflect {G : Geom} {a p q: Point} : a.R p = q ↔ M p a q :=
-  Iff.intro pt_reflect_of_eq_aRp eq_aRp_of_pt_reflect
+theorem aRp_q_iff_Mpaq {G : Geom} {a p q: Point} : a.R p = q ↔ M p a q :=
+  Iff.intro Mpaq_of_aRp_q aRp_q_of_Mpaq
+
+attribute [irreducible] Point.R -- should always use Satz 7.6 to do this
 
 -- Satz 7.7
-theorem double_reflect {G : Geom} {a p : Point} : a.R (a.R p) = p := by
-  rw [eq_aRp_iff_pt_reflect]; symm; unfold Point.R
+theorem double_reflect {G : Geom} (a p : Point) : a.R (a.R p) = p := by
+  rw [aRp_q_iff_Mpaq]; symm; unfold Point.R
   exact Exists.choose_spec (refl_thru_pt a p)
 
--- Satz 7.something
-theorem R_involution {G : Geom} {a : Point} : a.R ∘ a.R = id := by
-  funext q; exact double_reflect
+-- Satz 7.8 : In the book the claim is uniqueness but that follows from Satz 7.9
+theorem R_surj {G : Geom} {a : Point} : (a.R).Surjective :=
+  fun p' ↦ ⟨a.R p', double_reflect a p'⟩
+
+-- Satz 7.9
+theorem R_inj {G : Geom} {a : Point} : (a.R).Injective :=
+  fun x y hxy ↦
+  calc x = a.R (a.R x) := (double_reflect a x).symm
+  _ = a.R (a.R y) := congrArg a.R hxy
+  _ = y := double_reflect a y
+
+-- Satz 7.10
+theorem R_self {G : Geom} {a : Point} : (a.R) a = a := by
+  rw [aRp_q_iff_Mpaq]; exact midpt_triv.mpr rfl
+
+theorem R_eq_self_iff {G : Geom} {a p : Point} : a.R p = p ↔ p = a := by
+  rw [aRp_q_iff_Mpaq, midpt_triv, eq_comm]
+
+-- Satz 7.11
+theorem R_bijection {G : Geom} {a : Point} :
+  (a.R).Injective ∧ (a.R).Surjective := ⟨R_inj, R_surj⟩
+
+-- Satz 7.12
+theorem R_involution {G : Geom} {a : Point} : a.R ∘ a.R = id :=
+funext (double_reflect a)
+
+-- Satz 7.13
+
+theorem xax'_of_pap'_p'px_xp'x {G : Geom} {x p a p' x' : Point}
+(hpap' : B p a p') (hp'px : B p' p x) (hxp'x' : B x p' x') : B x a x' := by
+  have hxap' : B x a p' := xzw_of_xyw_yzw hp'px.symm hpap'; symm
+  exact xzw_of_xyw_yzw hxp'x'.symm hxap'.symm
+
+theorem R_isometry {G : Geom} {a p q : Point} : E p q (a.R p) (a.R q) := by
+  generalize hp' : a.R p = p'
+  generalize hq' : a.R q = q'
+/-  if p = a then p' = a and E a q a q' follows from the definitions of
+    a.R and M
+-/
+  by_cases hpa : p = a
+  · subst hpa; rw [R_self] at hp'; subst hp'
+    rw [aRp_q_iff_Mpaq] at hq'; exact hq'.2
+/-
+  Otherwise construct x, y, x' and y' as follows: We end up with two
+  congruent triangles a x y and a x' y',
+-/
+  have hp'1 := hp'; have hq'1 := hq'
+  rw [aRp_q_iff_Mpaq] at hp'1 hq'1
+  obtain ⟨hp'2, hp'3⟩ := hp'1; obtain ⟨hq'2, hq'3⟩ := hq'1
+  have ⟨x, hx1, hx2⟩ := sgmt_const p' p q a; have ⟨y, hy1, hy2⟩ := sgmt_const q' q p a
+  have ⟨x', hx'1, hx'2⟩ := sgmt_const x p' q a; have ⟨y', hy'1, hy'2⟩ := sgmt_const y q' p a
+/-  we have x * p * a * p' * x' and y * q * a * q' * y'
+    we also have ax ≡ ay ≡ ay' ≡ ax' -/
+  have hxax' : B x a x' := xax'_of_pap'_p'px_xp'x hp'2 hx1 hx'1
+  have hyay' : B y a y' := xax'_of_pap'_p'px_xp'x hq'2 hy1 hy'1
+  change p ≠ a at hpa; have hp'a : p' ≠ a := E_id_mt hpa hp'3.symm.lr
+  have hqy : q ≠ y := E_id_mt hpa hy2; have hq'y' : q' ≠ y' := E_id_mt hpa hy'2
+-- maybe I should have proven the stuff about B_n back in Ch 2
+-- do outer FS with x a x' y' / y' a y x
+  have hapx : B a p x := yzw_of_xyz_xzw hp'2.symm hx1
+  have hx'p'p : B x' p' p := (yzw_of_xyz_xzw hx1.symm hx'1).symm
+  have hx'p'a : B x' p' a := (xyz_of_xyw_yzw hx'p'p hp'2.symm)
+  have haqy : B a q y := yzw_of_xyz_xzw hq'2.symm hy1
+  have hy'q'q : B y' q' q := (yzw_of_xyz_xzw hy1.symm hy'1).symm
+  have hy'q'a : B y' q' a := (xyz_of_xyw_yzw hy'q'q hq'2.symm)
+  have hxay'a : E x a y' a := (sgmt_add hapx hy'q'a hy'2.symm.lr (E_trans hx2 hq'3.lr)).l
+  have hax'ay : E a x' a y := (sgmt_add hx'p'a haqy hx'2.lr (E_trans hp'3.symm.lr hy2.symm)).l
+  have hax : a ≠ x := by intro h; subst h; exact hpa.symm (btwn_id hapx)
+  have hx'y'yx : E x' y' y x :=
+    outer_five_sgmt hax.symm hxax' hyay'.symm hxay'a hax'ay E_comm hxay'a.symm.lr
+/-  then inner FS with y q a x / y' q' a x' (get qx ≡ q'x')-/
+  have hyqy'q' : E y q y' q' := E_trans hy2.l hy'2.symm.r
+  have haxax' : E a x a x' := sgmt_add hapx hx'p'a.symm hp'3 (E_trans hx2 hx'2.symm)
+  have hqxq'x' : E q x q' x' :=
+    inner_five_sgmt haqy.symm hy'q'a hyqy'q' hq'3.lr hx'y'yx.symm.r haxax'
+/-  and inner FS with x p a q / x' p' a q' (get pq ≡ p'q') -/
+  have hxpx'p' : E x p x' p' := E_trans hx2.l hx'2.symm.r
+  exact inner_five_sgmt hapx.symm hx'p'a hxpx'p' hp'3.lr hqxq'x'.lr hq'3
+
+-- Satz 7.14 : a.R is an isometry of the space, and therefore an automorphism
+-- Satz 7.15
+theorem btwn_R {G : Geom} {a p q r : Point} : B p q r → B (a.R p) (a.R q) (a.R r) :=
+  fun hpqr ↦ btwn_of_btwn_e3 hpqr ⟨R_isometry, R_isometry, R_isometry⟩
+
+theorem btwn_R_iff {G : Geom} {a p q r : Point} : B p q r ↔ B (a.R p) (a.R q) (a.R r) := by
+  constructor
+  · exact btwn_R
+  · intro h; rw [←double_reflect a p, ←double_reflect a q, ←double_reflect a r]
+    exact btwn_R h
+
+-- Satz 7.16
+theorem E_R {G : Geom} {a p q r s : Point} :
+  E p q r s → E (a.R p) (a.R q) (a.R r) (a.R s) :=
+  fun h ↦  E_eucl (E_trans h.symm R_isometry) R_isometry
+
+theorem E_R_iff {G : Geom} {a p q r s : Point} :
+  E p q r s ↔ E (a.R p) (a.R q) (a.R r) (a.R s) := by
+  constructor
+  · exact E_R
+  · intro h; rw [← double_reflect a p, ←double_reflect a q]
+    rw [← double_reflect a r, ← double_reflect a s]; exact E_R h
+
+-- Satz 7.17
+theorem unique_M {G : Geom} {a b p p' : Point} : M p a p' → M p b p' → a = b := by
+  intro ha ⟨hb1, hb2⟩; have ha' := ha; symm at ha
+  rw [← aRp_q_iff_Mpaq] at ha ha'
+  have h1 : E p' b (a.R p') (a.R b) := R_isometry
+  rw [ha] at h1; have h2 : E p b p (a.R b) := E_trans hb2.lr h1
+  have h3 : E p b (a.R p) (a.R b) := R_isometry
+  rw [ha'] at h3; have h4 : E p' b p' (a.R b) := E_trans hb2.lr.symm h3
+  have h5 : b = (a.R b) := eq_of_btwn_E hb1 h2 h4
+  exact (R_eq_self_iff.mp h5.symm).symm
+
+-- Satz 7.18
+theorem unique_M' {G : Geom} {a b p : Point} : (a.R p = b.R p) → a = b :=
+  fun h ↦ unique_M (Mpaq_of_aRp_q rfl) (h ▸ Mpaq_of_aRp_q (a := b) rfl)
+
+-- Satz 7.19 : Different reflection maps don't commute
+theorem R_M {G : Geom} {a p q r: Point} : M p q r ↔ M (a.R p) (a.R q) (a.R r) := by
+  unfold M; rw [btwn_R_iff (a := a), E_R_iff]
+
+theorem R_noncomm {G : Geom} {a b p : Point} :
+  a.R (b.R p) = b.R (a.R p) → a = b := by
+  intro LHS; generalize hp' : a.R p = p' at *
+  rw [aRp_q_iff_Mpaq, R_M (a := b), double_reflect, double_reflect] at LHS
+  rw [aRp_q_iff_Mpaq] at hp'; rw [←R_eq_self_iff]; symm
+  exact unique_M hp' LHS
+
+-- Satz 7.20
+theorem Mamb_of_ne_col_Emamb {G : Geom} {a m b : Point} :
+  a ≠ b → Col a m b → E m a m b → M a m b := by
+  intro hab hcol hmamb; rcases hcol with h | h | h
+  · exact ⟨h, hmamb⟩
+  · exact absurd (narboux_lemma h hmamb.symm).symm hab
+  · exact absurd (narboux_lemma h.symm hmamb) hab
+
+-- Lemma 7.21
+/-incredibly, if abcd is a quadrilateral so that a b and c are no collinear
+and d is not b, then the diagonals ac and bd cross at their midpoints.-/
+
+theorem central_symm_quad {G : Geom} {a b c d p : Point} :
+¬ Col a b c → b ≠ d → E a b c d → E b c d a → Col a p c → Col b p d →
+M a p c ∧ M b p d := by
+  intro htri_abc hbd he1 he2 hcol1 hcol2
+  have ⟨p', hE1⟩ := e3_of_col_eq hcol2.yz E_comm
+  have hcol3 : Col b d p' := (col_of_col_e3 hcol2 hE1.yz).r
+  have he3 := five_sgmt hbd hcol2.yz hE1 he1.lr he2.symm
+  have he4 := five_sgmt hbd hcol2.yz hE1 he2 he1.symm.lr
+  have hE2 : E3 a p c c p' a:= ⟨he3.lr, he4, E_comm⟩
+  have hcol4 : Col c p' a := col_of_col_e3 hcol1 hE2
+  have hne : Line a c ≠ Line b d := by
+    intro h; have hb : b ∈ Line b d := (line_gen_pt_mem hbd).1
+    rw [← h] at hb; exact htri_abc hb.2.yz
+  have hac : a ≠ c := (dist_of_not_col htri_abc).2.2
+  have hpp' : p = p' :=
+    unique_isect_pt (line_is_line hbd) (line_is_line hac) hne.symm ⟨hbd, hcol2.yz⟩
+    ⟨hac, hcol1.yz⟩ ⟨hbd, hcol3⟩ ⟨hac, hcol4.r⟩
+  subst hpp'; constructor
+  · exact Mamb_of_ne_col_Emamb hac hcol1 he3
+  · exact Mamb_of_ne_col_Emamb hbd hcol2 hE1.2.2.lr
 
 end Geom
 end Ch7

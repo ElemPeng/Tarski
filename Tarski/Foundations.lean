@@ -32,7 +32,7 @@ class Geom where
     Given any angle and any point v in its interior, there exists a line segment
     including v, with an endpoint on each side of the angle.
 -/
-    five_sgmt {x y z u x' y' z' u' : Point} : x ≠ y → B x y z → B x' y' z' → E x y x' y' →
+    outer_five_sgmt {x y z u x' y' z' u' : Point} : x ≠ y → B x y z → B x' y' z' → E x y x' y' →
         E y z y' z' → E x u x' u' → E y u y' u' → E z u z' u' --beeson A5
 /-
     Begin with two triangles, xuz and x'u'z'. Draw the line segments yu and y'u', connecting a
