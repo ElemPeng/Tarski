@@ -138,10 +138,10 @@ theorem xyw_of_xyz_yzw_ne {G : Geom} {x y z w} : B x y z → B y z w → y ≠ z
 
 -- Def 3.8: n-fold Betweenness
 
-def Bn {G : Geom} (L : List Point) := ∀ {x y z : Point}, [x, y, z].Sublist L → B x y z
+def Bn {G : Geom} (L : List Point) := ∀ x y z : Point, [x, y, z].Sublist L → B x y z
 
 theorem Bn.to_btwn {_G : Geom} {L : List Point} (h : Bn L) (x y z : Point)
-(h' : [x,y,z].Sublist L := by grind) : B x y z := h h'
+(h' : [x,y,z].Sublist L := by grind) : B x y z := h x y z h'
 
 example {G : Geom} {x y z w: Point}: Bn [x, y, z, w] → B x y z := by
     intro h; exact h.to_btwn x y z
@@ -150,11 +150,13 @@ example {G : Geom} {x y z w: Point}: Bn [x, y, z, w] → B x y z := by
 theorem Bn_symm {G : Geom} {L : List Point} : Bn L → Bn L.reverse := by
     intro h x y z hxyz; symm
     have h' : [z, y, x].Sublist L := List.reverse_sublist.mp hxyz
-    exact h h'
+    exact h z y x h'
+
+theorem Bn.symm {G : Geom} {L : List Point} (h : Bn L) : Bn L.reverse := Bn_symm h
 
 -- Satz 3.10
 theorem Bn_sublist {G : Geom} {L M : List Point} : M.Sublist L → Bn L → Bn M :=
-    fun hML hL _ _ _ hxyz ↦ hL (hxyz.trans hML)
+    fun hML hL x y z hxyz ↦ hL x y z (hxyz.trans hML)
 
 -- Satz 3.11 lmao this is a huge pain
 
@@ -210,7 +212,7 @@ theorem three_cases {G : Geom} {L1 L2 : List Point} {a b : Point} : [a, b].Subli
             ·   exact List.mem_of_cons_sublist h3
         ·   simp_all
 
-theorem Bn_insert {G : Geom} {L1' L2' : List Point} {x y p : Point} :
+theorem Bn_insert {G : Geom} (L1' L2' : List Point) {x p y : Point} :
 Bn (L1' ++ [x] ++ y :: L2') → B x p y → Bn (L1' ++ [x] ++ p :: y :: L2') := by
     intro hBn hBxpy a b c habc
     have hL1Bn : Bn (L1' ++ [x]) :=
@@ -218,7 +220,7 @@ Bn (L1' ++ [x] ++ y :: L2') → B x p y → Bn (L1' ++ [x] ++ p :: y :: L2') := 
     have hL2Bn : Bn (y :: L2') :=
         Bn_sublist (List.sublist_append_right (L1' ++ [x]) (y :: L2')) hBn
     rcases (four_cases habc) with ha | ⟨ha, hb⟩ | ⟨ha, hb⟩ | ha
-    ·   exact hL1Bn ha
+    ·   exact hL1Bn a b c ha
     ·   rcases (two_cases_1 hb) with hc | hc
         ·   subst hc; have haby : B a b y := by
                 refine hBn.to_btwn a b y <| List.sublist_append_iff.mpr ⟨[a, b], [y], ?_, ha, by simp⟩
@@ -234,7 +236,7 @@ Bn (L1' ++ [x] ++ y :: L2') → B x p y → Bn (L1' ++ [x] ++ p :: y :: L2') := 
                 exact xyz_of_xyw_yzw haby hbcy
             ·   simp at he; subst he; exact xyz_of_xyw_yzw haby hBxpy
             ·   exact absurd (List.Sublist.length_le hd) (by simp)
-        ·   refine hBn (List.sublist_append_iff.mpr ?_)
+        ·   refine hBn a b c (List.sublist_append_iff.mpr ?_)
             exact ⟨[a, b], [c], List.self_eq_append_right.mpr rfl, ha, hc⟩
     ·   rcases (two_cases_2 hb) with ⟨hc, hd⟩ | hc
         ·   subst hc; simp at hd; have hayc : B a y c := by
@@ -256,7 +258,7 @@ Bn (L1' ++ [x] ++ y :: L2') → B x p y → Bn (L1' ++ [x] ++ p :: y :: L2') := 
                 have haby : B a b y := xzw_of_xyw_yzw haxy hBxpy
                 exact xyw_of_xyz_xzw haby hayc
             ·   subst h; exact xyw_of_xyz_xzw hBxpy hayc
-        ·   refine hBn (List.sublist_append_iff.mpr ?_)
+        ·   refine hBn a b c (List.sublist_append_iff.mpr ?_)
             exact ⟨[a], [b, c], List.self_eq_append_left.mpr rfl,
                  List.singleton_sublist.mpr ha, hc⟩
     ·   rcases (two_cases_3 ha) with ⟨hc, hd⟩ | hc
@@ -272,7 +274,41 @@ Bn (L1' ++ [x] ++ y :: L2') → B x p y → Bn (L1' ++ [x] ++ p :: y :: L2') := 
                     rw [List.singleton_sublist]; exact List.mem_of_cons_sublist he
                 have hxab : B x a b := xyw_of_xyz_xzw hBxpy hxyb
                 exact yzw_of_xyz_xzw hxab hxbc
-        ·   exact hL2Bn hc
+        ·   exact hL2Bn a b c hc
+
+-- Some simple cases to get started
+theorem Bn3_of_btwn {G : Geom} {a b c : Point} : B a b c → (Bn [a, b, c]) := by
+    intro h x y z h'; have h'' : [x , y, z] = [a, b, c] := (List.Sublist.length_eq h').mp rfl
+    simp at h''; have ⟨ha, hb, hc⟩ := h''; rwa [ha, hb, hc]
+
+theorem B.Bn {G : Geom} {a b c : Point} (h : B a b c) : Bn [a, b, c] := Bn3_of_btwn h
+
+-- Bn4 version of Satz 3.5
+theorem Bn4_of_xyw_yzw {G : Geom} {x y z w : Point} : B x y w → B y z w → Bn [x, y, z, w] :=
+    fun hb1 hb2 ↦ Bn_insert [x] [] (hb1.Bn) hb2
+
+-- Bn4 version of Satz 3.6
+theorem Bn4_of_xyz_xzw {G : Geom} {x y z w : Point} : B x y z → B x z w → Bn [x, y, z, w] :=
+    fun hb1 hb2 ↦ Bn_insert [] [w] (hb2.Bn) hb1
+
+--Bn4 version of Satz 3.7
+theorem Bn4_of_xyz_yzw_ne {G : Geom} {x y z w : Point} : B x y z → B y z w → y ≠ z → Bn [x, y, z, w] :=
+    fun hb1 hb2 ne ↦ Bn4_of_xyz_xzw hb1 <|xzw_of_xyz_yzw_ne hb1 hb2 ne
+
+-- an application from the SST proof of Satz 5.1
+theorem Bn5_of_xyz_xzw_xwv {G : Geom} {x y z w v : Point} :  B x y z → B x z w → B x w v → Bn [x, y, z, w, v] :=
+    fun hb1 hb2 hb3 ↦ Bn_insert [] [w, v] (Bn4_of_xyz_xzw hb2 hb3) hb1
+
+-- possibly another helper, not in SST but should be true.
+theorem Bn_concat {G : Geom} {L1' L2' : List Point} {x y : Point} :
+    Bn (L1' ++ [x, y]) → Bn (x :: y :: L2') → x ≠ y → Bn (L1' ++ x :: y :: L2') := by sorry
+
+-- Satz 3.12, flipped (easier to add to the head than the tail) (use reverse to get tail?)
+theorem Bn_head {G : Geom} {L1' L2' : List Point} {p x y : Point} :
+    Bn (x :: L1' ++ y :: L2') → B p x y → Bn (p :: x :: L1' ++ [y]) := by sorry
+
+theorem Bn_head_ne {G : Geom} {L1' L2' : List Point} {p x y : Point} :
+    Bn (x :: L1' ++ y :: L2') → B p x y → x ≠ y → Bn (p :: x :: L1' ++ y :: L2') := by sorry
 
 /-  In Beeson's work, the a b c in lo_dim are constants that
     just exist as part of the Skolemization; these three results show that a b and c are distinct.
