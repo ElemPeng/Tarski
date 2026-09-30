@@ -78,13 +78,18 @@ theorem le_antisymm {G : Geom} {x y z w : Point} : le x y z w → le z w x y →
     subst heq2; exact hb2.symm
 
 -- Satz 5.10
-theorem le_total {G : Geom} {x y z w : Point} : le x y z w ∨ le z w x y := by
+theorem le_total {G : Geom} (x y z w : Point) : le x y z w ∨ le z w x y := by
     have ⟨b, ha1, ha2⟩ := sgmt_const' w z; rw [btwn_symm_iff] at ha1
     have ⟨a, hb1, hb2⟩ := sgmt_const b z x y
     have h := yzw_or_ywz_of_ne_xyz_xyw ha2.symm ha1 hb1
     rcases h with h' | h'
     ·   apply Or.inr; rw [le_iff]; exact ⟨a, h', hb2⟩
     ·   apply Or.inl; exact ⟨a, h', hb2.symm⟩
+
+-- not stated anywhere I can find: le a b a a → b = a; pretty easy
+theorem le_triv {G : Geom} {a b : Point} : le a b a a → b = a := by
+    intro ⟨c, h1, h2⟩; rw [btwn_id h1] at h2 ⊢
+    exact (E_id h2).symm
 
 -- Satz 5.11
 theorem nonneg {G : Geom} {x y z : Point} : le z z x y := ⟨x, btwn_refl, degen_sgmts⟩

@@ -216,5 +216,44 @@ M a p c ∧ M b p d := by
   · exact Mamb_of_ne_col_Emamb hac hcol1 he3
   · exact Mamb_of_ne_col_Emamb hbd hcol2 hE1.2.2.lr
 
+-- Lemma 7.22 Krippenlemma
+theorem krippenlemma_wlog {G : Geom} {a1 a2 b1 b2 m1 m2 c : Point} (hlea : le c a1 c a2 ):
+B a1 c a2 → B b1 c b2 → E c a1 c b1 → E c a2 c b2 → M a1 m1 b1 → M a2 m2 b2 → B m1 c m2 := by
+  intro hb1 hb2 he1 he2 hm1 hm2; by_cases hca1 : c = a1
+  · subst hca1; rw [E_id he1.symm] at *
+    rw [midpt_triv.mp hm1] at *; exact btwn_refl
+  by_cases hca2 : c = a2
+  · subst hca2; exact absurd (le_triv hlea).symm hca1
+  have hcb1 : c ≠ b1 := E_id_mt hca1 he1.symm
+  have hcb2 : c ≠ b2 := E_id_mt hca2 he2.symm
+  have ⟨a, hb3, he3⟩ := sgmt_of_le hlea
+  have hleb : le c b1 c b2 := le_of_le_E hlea he1 he2
+  have ⟨b, hb4, he4⟩ := sgmt_of_le hleb
+  have ha : c.R a2 = a := by
+    rw [aRp_q_iff_Mpaq]; constructor
+    · exact xyw_of_xyz_yzw_ne hb1.symm hb3 hca1
+    · exact he3.symm
+  have hb : c.R b2 = b := by
+    rw[aRp_q_iff_Mpaq]; constructor
+    · exact xyw_of_xyz_yzw_ne hb2.symm hb4 hcb1
+    · exact he4.symm
+  generalize hm : c.R m2 = m
+  have hm3 := (R_M (a := c)).mp hm2
+  rw [ha, hb, hm] at hm3
+  have ⟨q, hq1, hq2⟩ := crossbar hb3.symm hb4.symm hm3.1
+  have hqcm2 : B q c m2 := yzw_of_xyz_xzw hq1 (aRp_q_iff_Mpaq.mp hm).1.symm
+  have he5 : E a1 a b1 b :=
+    (sgmt_sub hb3.symm hb4.symm (E_trans (E_trans he3 he2) he4.symm).lr he1.lr).lr
+  have hifs1 := inner_five_sgmt hb3 hb4 he1 he5 E_refl hm3.2.lr
+  have hifs2 := inner_five_sgmt hq1.symm hq1.symm E_refl E_refl he1 hifs1.lr
+  have hm4 : M a1 q b1 := ⟨hq2, hifs2⟩
+  have hqm1 : q = m1 := unique_M hm4 hm1; rwa [←hqm1]
+
+theorem krippenlemma {G : Geom} {a1 a2 b1 b2 m1 m2 c : Point} :
+B a1 c a2 → B b1 c b2 → E c a1 c b1 → E c a2 c b2 → M a1 m1 b1 → M a2 m2 b2 → B m1 c m2 := by
+  intro hb1 hb2 he1 he2 hm1 hm2; rcases (le_total c a1 c a2) with h | h
+  · exact krippenlemma_wlog h hb1 hb2 he1 he2 hm1 hm2
+  · exact (krippenlemma_wlog h hb1.symm hb2.symm he2 he1 hm2 hm1).symm
+
 end Geom
 end Ch7
