@@ -136,7 +136,144 @@ theorem xyw_of_xyz_yzw_ne {G : Geom} {x y z w} : B x y z → B y z w → y ≠ z
     intro hb1 hb2 hne; have hb3 : B x z w := xzw_of_xyz_yzw_ne hb1 hb2 hne
     exact xyw_of_xyz_xzw hb1 hb3
 
--- Satz 3.13abc, essentially.
+-- Def 3.8: n-fold Betweenness
+
+def Bn {G : Geom} (L : List Point) := ∀ {x y z : Point}, [x, y, z].Sublist L → B x y z
+
+theorem Bn.to_btwn {_G : Geom} {L : List Point} (h : Bn L) (x y z : Point)
+(h' : [x,y,z].Sublist L := by grind) : B x y z := h h'
+
+example {G : Geom} {x y z w: Point}: Bn [x, y, z, w] → B x y z := by
+    intro h; exact h.to_btwn x y z
+
+-- Satz 3.9
+theorem Bn_symm {G : Geom} {L : List Point} : Bn L → Bn L.reverse := by
+    intro h x y z hxyz; symm
+    have h' : [z, y, x].Sublist L := List.reverse_sublist.mp hxyz
+    exact h h'
+
+-- Satz 3.10
+theorem Bn_sublist {G : Geom} {L M : List Point} : M.Sublist L → Bn L → Bn M :=
+    fun hML hL _ _ _ hxyz ↦ hL (hxyz.trans hML)
+
+-- Satz 3.11 lmao this is a huge pain
+
+theorem four_cases {G : Geom} {L1 L2 : List Point} {a b c : Point} : [a, b, c].Sublist (L1 ++ L2) →
+[a, b, c].Sublist L1 ∨ ([a, b].Sublist L1 ∧ c ∈ L2) ∨
+(a ∈ L1 ∧ [b, c].Sublist L2) ∨ [a, b, c].Sublist L2 := by
+    intro h; rw [List.sublist_append_iff] at h
+    obtain ⟨l1, l2, h1, hl1, hl2⟩ := h
+    rw [List.cons_eq_append_iff] at h1; rcases h1 with ⟨ha, hb⟩ | ⟨l3, ha, hb⟩
+    ·   subst hb; simp [← or_assoc]; exact Or.inr hl2
+    ·   subst ha; rw [List.cons_eq_append_iff] at hb; rcases hb with ⟨hc, hd⟩ | ⟨l4, hc, hd⟩
+        ·   apply Or.inr ∘ Or.inr ∘ Or.inl; subst hc hd; refine ⟨?_,hl2⟩
+            exact List.mem_of_cons_sublist hl1
+        ·   subst hc; rw [List.singleton_eq_append_iff] at hd
+            rcases hd with ⟨he, hf⟩ | ⟨he, hf⟩ <;> subst he hf
+            ·   apply Or.inr ∘ Or.inl; refine ⟨hl1, ?_⟩
+                exact List.mem_of_cons_sublist hl2
+            ·   exact Or.inl hl1
+
+theorem two_cases_3 {G : Geom} {L : List Point} {a b c p : Point} : [a, b, c].Sublist (p :: L) →
+(a = p ∧ [b, c].Sublist L) ∨ [a, b, c].Sublist L := by
+    intro h; rw [List.sublist_cons_iff] at h
+    rcases h with ha | ⟨N, ha, hb⟩
+    ·   exact Or.inr ha
+    ·   rw [List.cons_eq_cons] at ha; obtain ⟨hc, hd⟩ := ha
+        subst hc hd; simp only [true_and]; exact Or.inl hb
+
+theorem two_cases_2 {G : Geom} {L : List Point} {a b p : Point} : [a, b].Sublist (p :: L) →
+(a = p ∧ [b].Sublist L) ∨ [a, b].Sublist L := by
+    intro h; rw [List.sublist_cons_iff] at h
+    rcases h with ha | ⟨N, ha, hb⟩
+    ·   exact Or.inr ha
+    ·   rw [List.cons_eq_cons] at ha; obtain ⟨hc, hd⟩ := ha
+        subst hc hd; simp only [true_and]; exact Or.inl hb
+
+theorem two_cases_1 {G : Geom} {L: List Point} {a p : Point} : a ∈ (p :: L) →
+(a = p) ∨ [a].Sublist L := by
+    intro h; rw [List.mem_cons] at h
+    rcases h with ha | ha
+    ·   exact Or.inl ha
+    ·   exact Or.inr <| List.singleton_sublist.mpr ha
+
+theorem three_cases {G : Geom} {L1 L2 : List Point} {a b : Point} : [a, b].Sublist (L1 ++ L2) →
+[a, b].Sublist L1 ∨ (a ∈ L1 ∧ b ∈ L2) ∨ [a, b].Sublist L2 := by
+    intro h; rw [List.sublist_append_iff] at h
+    obtain ⟨l1, l2, h1, h2, h3⟩ := h
+    rw [List.cons_eq_append_iff] at h1; rcases h1 with ⟨ha, hb⟩ | ⟨l3, ha, hb⟩
+    ·   subst ha hb; exact Or.inr <| Or.inr h3
+    ·   subst ha; rw [List.cons_eq_append_iff] at hb
+        rcases hb with ⟨hc, hd⟩ | ⟨l4, hc, hd⟩ <;> subst hc
+        ·   rw [hd] at h3; apply Or.inr ∘ Or.inl; constructor
+            ·   exact List.mem_of_cons_sublist h2
+            ·   exact List.mem_of_cons_sublist h3
+        ·   simp_all
+
+theorem Bn_insert {G : Geom} {L1' L2' : List Point} {x y p : Point} :
+Bn (L1' ++ [x] ++ y :: L2') → B x p y → Bn (L1' ++ [x] ++ p :: y :: L2') := by
+    intro hBn hBxpy a b c habc
+    have hL1Bn : Bn (L1' ++ [x]) :=
+        Bn_sublist (List.sublist_append_left (L1' ++ [x]) (y :: L2') ) hBn
+    have hL2Bn : Bn (y :: L2') :=
+        Bn_sublist (List.sublist_append_right (L1' ++ [x]) (y :: L2')) hBn
+    rcases (four_cases habc) with ha | ⟨ha, hb⟩ | ⟨ha, hb⟩ | ha
+    ·   exact hL1Bn ha
+    ·   rcases (two_cases_1 hb) with hc | hc
+        ·   subst hc; have haby : B a b y := by
+                refine hBn.to_btwn a b y <| List.sublist_append_iff.mpr ⟨[a, b], [y], ?_, ha, by simp⟩
+                ·   exact List.self_eq_append_right.mpr rfl
+            rcases (three_cases ha) with hd | ⟨hd, he⟩ | hd
+            ·   have hbxy : B b x y := by
+                    refine hBn.to_btwn b x y <| List.sublist_append_iff.mpr ⟨[b, x], [y], ?_, ?_, ?_⟩
+                    ·   exact List.self_eq_append_right.mpr rfl
+                    ·   refine List.sublist_append_iff.mpr ⟨[b], [x], by simp, ?_, by simp⟩
+                        ·   exact List.sublist_of_cons_sublist hd
+                    ·   exact List.singleton_sublist.mpr (List.mem_cons_self)
+                have hbcy := xzw_of_xyw_yzw hbxy hBxpy
+                exact xyz_of_xyw_yzw haby hbcy
+            ·   simp at he; subst he; exact xyz_of_xyw_yzw haby hBxpy
+            ·   exact absurd (List.Sublist.length_le hd) (by simp)
+        ·   refine hBn (List.sublist_append_iff.mpr ?_)
+            exact ⟨[a, b], [c], List.self_eq_append_right.mpr rfl, ha, hc⟩
+    ·   rcases (two_cases_2 hb) with ⟨hc, hd⟩ | hc
+        ·   subst hc; simp at hd; have hayc : B a y c := by
+                rcases hd with h | h
+                ·   subst h; exact btwn_refl'
+                ·   refine hBn.to_btwn a y c <|
+                    List.sublist_append_iff.mpr ⟨[a], [y, c], by simp, ?_, ?_⟩
+                    ·   exact List.singleton_sublist.mpr ha
+                    ·   refine List.Sublist.cons_cons y ?_
+                        exact List.singleton_sublist.mpr h
+            rw [List.mem_append] at ha; simp at ha
+            rcases ha with h | h
+            ·   have haxy : B a x y := by
+                    refine hBn.to_btwn a x y <|
+                    List.sublist_append_iff.mpr ⟨[a, x], [y], by simp, ?_, by simp⟩
+                    rw [List.sublist_append_iff]
+                    refine ⟨[a], [x], by simp, ?_, by simp⟩
+                    exact List.singleton_sublist.mpr h
+                have haby : B a b y := xzw_of_xyw_yzw haxy hBxpy
+                exact xyw_of_xyz_xzw haby hayc
+            ·   subst h; exact xyw_of_xyz_xzw hBxpy hayc
+        ·   refine hBn (List.sublist_append_iff.mpr ?_)
+            exact ⟨[a], [b, c], List.self_eq_append_left.mpr rfl,
+                 List.singleton_sublist.mpr ha, hc⟩
+    ·   rcases (two_cases_3 ha) with ⟨hc, hd⟩ | hc
+        ·   subst hc; have hxbc : B x b c := by
+                refine hBn.to_btwn x b c <|
+                    List.sublist_append_iff.mpr ⟨[x], [b, c], by simp, by simp, hd⟩
+            rcases (two_cases_2 hd) with ⟨he, hf⟩ | he
+            ·   subst he; exact yzw_of_xyz_xzw hBxpy hxbc
+            ·   have hxyb : B x y b := by
+                    refine hBn.to_btwn x y b <|
+                        List.sublist_append_iff.mpr ⟨[x], [y, b], by simp, by simp, ?_⟩
+                    refine List.Sublist.cons_cons y ?_
+                    rw [List.singleton_sublist]; exact List.mem_of_cons_sublist he
+                have hxab : B x a b := xyw_of_xyz_xzw hBxpy hxyb
+                exact yzw_of_xyz_xzw hxab hxbc
+        ·   exact hL2Bn hc
+
 /-  In Beeson's work, the a b c in lo_dim are constants that
     just exist as part of the Skolemization; these three results show that a b and c are distinct.
     We show the more general result that if y is not on the interval xz, then y is not
@@ -152,6 +289,7 @@ theorem three_dist (G : Geom) : ∃ a b c : Point, a ≠ b ∧ b ≠ c ∧ a ≠
     · exact (dist_of_not_btwn h1).2
     · exact (dist_of_not_btwn h2).2.symm
 
+-- This one is Satz 3.13 specifically
 theorem two_dist (G : Geom) : ∃ a b : Point, a ≠ b := by
     have ⟨a, b, _, h, _⟩ := G.three_dist; exact ⟨a, b, h⟩
 
