@@ -225,7 +225,6 @@ B a1 c a2 → B b1 c b2 → E c a1 c b1 → E c a2 c b2 → M a1 m1 b1 → M a2 
   by_cases hca2 : c = a2
   · subst hca2; exact absurd (le_triv hlea).symm hca1
   have hcb1 : c ≠ b1 := E_id_mt hca1 he1.symm
-  have hcb2 : c ≠ b2 := E_id_mt hca2 he2.symm
   have ⟨a, hb3, he3⟩ := sgmt_of_le hlea
   have hleb : le c b1 c b2 := le_of_le_E hlea he1 he2
   have ⟨b, hb4, he4⟩ := sgmt_of_le hleb
