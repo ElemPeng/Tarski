@@ -92,7 +92,7 @@ theorem le_triv {G : Geom} {a b : Point} : le a b a a → b = a := by
     exact (E_id h2).symm
 
 -- Satz 5.11
-theorem nonneg {G : Geom} {x y z : Point} : le z z x y := ⟨x, btwn_refl, degen_sgmts⟩
+theorem nonneg {G : Geom} {x y z : Point} : le z z x y := ⟨x, btwn_refl, E_triv⟩
 
 -- Satz 5.12
 theorem le_of_btwn_left {G : Geom} {x y z : Point} : B x y z → le x y x z := by

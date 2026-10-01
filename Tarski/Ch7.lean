@@ -254,5 +254,49 @@ B a1 c a2 → B b1 c b2 → E c a1 c b1 → E c a2 c b2 → M a1 m1 b1 → M a2 
   · exact krippenlemma_wlog h hb1 hb2 he1 he2 hm1 hm2
   · exact (krippenlemma_wlog h hb1.symm hb2.symm he2 he1 hm2 hm1).symm
 
+theorem Mamb_of_cacb {G : Geom} {a b c : Point} : E c a c b → ∃ m, M a m b := by
+  intro hcacb; by_cases h: Col a c b
+  · rcases h with h' | h' | h'
+    · exact ⟨c, h', hcacb⟩
+    · have hba : b = a := narboux_lemma h' hcacb.symm
+      subst hba; exact ⟨b, midpt_triv.mpr rfl⟩
+    · have hab : a = b := narboux_lemma h'.symm hcacb
+      subst hab; exact ⟨a, midpt_triv.mpr rfl⟩
+  have ⟨p, hp1, hp2⟩ := sgmt_const' c a
+  have ⟨q, hq1, hq2⟩ := sgmt_const c b a p
+  have ⟨r, hr1, hr2⟩ := inner_pasch hq1.symm hp1.symm
+  have ⟨x, hx1, hx2⟩ := inner_pasch hp1 hr1
+  by_cases hca : c = a
+  · subst hca; have hcb : c = b := E_id hcacb.symm
+    subst hcb; exact ⟨c, midpt_triv.mpr rfl⟩
+  have hafs := outer_five_sgmt hca hp1 hq1 hcacb hq2.symm hcacb.symm E_comm
+  have ⟨r', hr'1, hr'2, hr'3⟩ := sgmt_split hr1 hafs.lr
+  have hifs1 := inner_five_sgmt hr1 hr'1 hr'2 hr'3 E_comm hq2.lr.symm
+  have hifs2 := inner_five_sgmt hr1 hr'1 hr'2 hr'3 hq2 E_comm
+  have hcol_brp : Col b r p := hr1.col
+  have hcol_br'p : Col b r' p := col_of_col_e3 hr2.col ⟨hifs1.lr, hifs2, hafs.lr.symm⟩
+  have hcol_arq := hr2.col
+  have hcol_ar'q := hr'1.col
+  by_cases hbad : a = q
+  ·   subst hbad; have hbp : b = p := (E_id hafs).symm
+      subst hbp; have har : a = r := btwn_id hr2
+      have hbr : a = r' := btwn_id hr'1
+      subst har hbr; have hab : a = b := E_id hifs2.symm
+      subst hab; exact ⟨a, midpt_triv.mpr rfl⟩
+  by_cases hbad2 : b = p
+  ·   subst hbad2; exact absurd (E_id hafs.symm) (Ne.symm hbad)
+  have hL1 : r ∈ Line a q := ⟨hbad, hcol_arq.yz⟩
+  have hL2 : r' ∈ Line a q := ⟨hbad, hcol_ar'q.yz⟩
+  have hL3 : r ∈ Line b p := ⟨hbad2, hcol_brp.yz⟩
+  have hL4 : r' ∈ Line b p := ⟨hbad2, hcol_br'p.yz⟩
+  have h' := by
+      refine unique_isect_pt (?_) (?_) (?_) hL1 hL3 hL2 hL4
+      ·   exact line_is_line hbad
+      ·   exact line_is_line hbad2
+      ·   intro h'; have ⟨hb, hp⟩ := line_gen_pt_mem hbad2
+          rw [←h'] at hb hp; have ⟨_, hb'⟩ := hb; have ⟨_, hp'⟩ := hp
+          sorry
+  subst h'; refine ⟨x, hx1, ?_⟩
+  sorry
 end Geom
 end Ch7

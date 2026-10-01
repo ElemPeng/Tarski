@@ -44,7 +44,7 @@ theorem E_flip_both_iff {G : Geom} {x y z w : Point} : E x y z w ↔ E y x w z :
     constructor; all_goals exact E_flip_both
 
 --- Satz 2.8
-theorem degen_sgmts {G : Geom} {x y : Point} : E x x y y := by
+theorem E_triv {G : Geom} {x y : Point} : E x x y y := by
     have ⟨z, hz1, hz2⟩ : ∃ z, B x x z ∧ E x z y y := sgmt_const x x y y
     have hE : x = z := E_id hz2; rwa [←hE] at hz2
 
@@ -54,7 +54,7 @@ theorem sgmt_add {G : Geom} {x y z x' y' z' : Point} : B x y z → B x' y' z' �
     intro hb1 hb2 he1 he2; apply E_flip_both; by_cases h : x = y
     ·   subst h; have he1 := he1.symm; have he2 := he2.symm
         have hx'y' : x' = y' := E_id he1; subst hx'y'; exact (he2.lr.symm)
-    apply outer_five_sgmt h (hb1) hb2 he1 he2 (degen_sgmts) (he1.lr)
+    apply outer_five_sgmt h (hb1) hb2 he1 he2 (E_triv) (he1.lr)
 
 --- Satz 2.12
 theorem unique_sgmt_const {G : Geom} {q a x b c y : Point} :
