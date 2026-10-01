@@ -67,7 +67,7 @@ theorem R_inj {G : Geom} {a : Point} : (a.R).Injective :=
   _ = y := double_reflect a y
 
 -- Satz 7.10
-theorem R_self {G : Geom} {a : Point} : (a.R) a = a := by
+theorem R_self {G : Geom} (a : Point) : (a.R) a = a := by
   rw [aRp_q_iff_Mpaq]; exact midpt_triv.mpr rfl
 
 theorem R_eq_self_iff {G : Geom} {a p : Point} : a.R p = p ↔ p = a := by
@@ -289,14 +289,26 @@ theorem Mamb_of_cacb {G : Geom} {a b c : Point} : E c a c b → ∃ m, M a m b :
   have hL2 : r' ∈ Line a q := ⟨hbad, hcol_ar'q.yz⟩
   have hL3 : r ∈ Line b p := ⟨hbad2, hcol_brp.yz⟩
   have hL4 : r' ∈ Line b p := ⟨hbad2, hcol_br'p.yz⟩
-  have h' := by
+  have h' : r = r' := by
       refine unique_isect_pt (?_) (?_) (?_) hL1 hL3 hL2 hL4
       ·   exact line_is_line hbad
       ·   exact line_is_line hbad2
-      ·   intro h'; have ⟨hb, hp⟩ := line_gen_pt_mem hbad2
-          rw [←h'] at hb hp; have ⟨_, hb'⟩ := hb; have ⟨_, hp'⟩ := hp
-          sorry
+      ·   -- An extremely ugly proof that Line a q ≠ Line b p
+          -- TODO : make this not awful.
+          intro h'; suffices hacb : Col a c b from (h hacb)
+          have ⟨hb, hp⟩ := line_gen_pt_mem hbad2
+          have haqp : Col a p q := by
+            rw [←h'] at hb hp; exact hp.2.yz
+          have hcol_apc : Col a p c := hp1.col.l
+          have hc : c ∈ Line a p := ⟨hp2, hcol_apc⟩
+          have hleq : Line a p = Line a q := by
+            exact line_eq (Ne.symm hbad) ⟨hp2, haqp⟩
+          rw [←h', ←hleq] at hb
+          have ⟨ha,_⟩ := line_gen_pt_mem hp2
+          rw [col_iff_on_same_line]
+          refine ⟨Line a p, line_is_line hp2, ha, hc, hb⟩
   subst h'; refine ⟨x, hx1, ?_⟩
-  sorry
+  exact inner_five_sgmt hx2 hx2 E_refl E_refl hifs1 hcacb
+
 end Geom
 end Ch7
