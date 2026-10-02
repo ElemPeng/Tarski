@@ -93,44 +93,41 @@ Right a b c → E3 a b c a' b' c' → Right a' b' c' := by
 def PSet.perp_at_x {G : Geom} (A A' : PSet G) (x : Point) :=
 IsLine A ∧ IsLine A' ∧ x ∈ A ∧ x ∈ A' ∧ ∀ u v : Point, (u ∈ A → v ∈ A' → Right u x v)
 
-notation:80 A " ⟂[" x "] " B => PSet.perp_at_x A B x
+notation:80 A:81 " ⟂[" x "] " B:81 => PSet.perp_at_x A B x
 
 example {G : Geom} (A B : PSet G) (x : Point) :
-  (A ⟂[x] B) ↔ A.perp_at_x B x := by rfl
+  A ⟂[x] B ↔ A.perp_at_x B x := by rfl
 
 def PSet.perp {G : Geom} (A A' : PSet G) := ∃ x : Point, A.perp_at_x A' x
 
-infix:80 "⟂" => PSet.perp
+infix:80 " ⟂ " => PSet.perp
 /- SST has another notation ab ⟂ cd for Line ab ⟂ Line cd but i'll just
 write Line ab and Line cd
 -/
 
 -- Satz 8.12
-theorem perp_at_x_symm {G : Geom} {A B : PSet G} {x : Point} : (A ⟂[x] B) → (B ⟂[x] A) :=
+@[symm] theorem perpx_symm {G : Geom} {A B : PSet G} {x : Point} : (A ⟂[x] B) → (B ⟂[x] A) :=
   fun ⟨hA, hB, hxA, hxB, hxR⟩ ↦ ⟨hB, hA, hxB, hxA, fun u v hu hv ↦ (hxR v u hv hu).symm⟩
 
 theorem PSet.perp_at_x.symm {G : Geom} {A B : PSet G} {x : Point} (h : A ⟂[x] B) :
-  B ⟂[x] A := perp_at_x_symm h
+  B ⟂[x] A := perpx_symm h
 
-theorem perp_symm {G : Geom} {A B : PSet G} : A ⟂ B → B ⟂ A :=
+@[symm] theorem perp_symm {G : Geom} {A B : PSet G} : A ⟂ B → B ⟂ A :=
 fun ⟨x, hx⟩ ↦ ⟨x, hx.symm⟩
 
 theorem perp.symm {G : Geom} {A B : PSet G} (h : A ⟂ B) : B ⟂ A := perp_symm h
 
 -- Satz 8.13 : perpendicular lines form nontrivial right angles
 
--- lemma i need
-
-theorem nontriv_right_of_perp_at_x {G : Geom} {A B : PSet G} {x : Point} : (A ⟂[x] B) →
+theorem nontriv_of_perpx {G : Geom} {A B : PSet G} {x : Point} : (A ⟂[x] B) →
   IsLine A ∧ IsLine B ∧ x ∈ A ∧ x ∈ B ∧ (∃ u v : Point,
   u ∈ A ∧ v ∈ B ∧ u ≠ x ∧ v ≠ x ∧ Right u x v) := by
   intro ⟨hA, hB, hxA, hxB, hxR⟩; refine ⟨hA, hB, hxA, hxB, ?_⟩
-  have ⟨a1, a2, ha1a2, hA'⟩ := hA
   have ⟨u, hux, huA⟩ := another_pt_on_line hA hxA
   have ⟨v, hvx, hvB⟩ := another_pt_on_line hB hxB
   refine ⟨u, v, huA, hvB, hux, hvx, hxR u v huA hvB⟩
 
-theorem perp_at_x_of_nontriv_right {G : Geom} {A B : PSet G} {x : Point} :
+theorem perpx_of_nontriv {G : Geom} {A B : PSet G} {x : Point} :
 IsLine A → IsLine B → x ∈ A → x ∈ B → (∃ u v : Point,
   u ∈ A ∧ v ∈ B ∧ u ≠ x ∧ v ≠ x ∧ Right u x v) → (A ⟂[x] B) := by
   intro hA hB hxA hxB ⟨u, v, huA, hvB, hux, hvx, hR⟩
@@ -139,6 +136,72 @@ IsLine A → IsLine B → x ∈ A → x ∈ B → (∃ u v : Point,
   col_iff_on_same_line.mpr ⟨A, hA, huA, hxA, hu'A⟩; symm at h' ⊢
   exact right_extend h' hvx <| col_iff_on_same_line.mpr ⟨B, hB, hvB, hxB, hv'B⟩
 
+theorem perpx_iff_nontriv {G : Geom} {A B : PSet G} {x : Point} : (A ⟂[x] B) ↔
+  IsLine A ∧ IsLine B ∧ x ∈ A ∧ x ∈ B ∧ (∃ u v : Point,
+  u ∈ A ∧ v ∈ B ∧ u ≠ x ∧ v ≠ x ∧ Right u x v) := by
+  constructor
+  · exact nontriv_of_perpx
+  · exact fun ⟨hA, hB, hxA, hxB, hE⟩ ↦ perpx_of_nontriv hA hB hxA hxB hE
 
+-- Satz 8.14i
+theorem ne_of_perp {G : Geom} {A B : PSet G} : A ⟂ B → A ≠ B := by
+  intro ⟨x, ⟨hA, hB, hxA, hxB, huv⟩⟩ hAB
+  have ⟨u, hux, huA⟩ := another_pt_on_line hA hxA
+  have ⟨v, hvx, hvB⟩ := another_pt_on_line hB hxB
+  have hR := huv u v huA hvB
+  subst hAB; have hcol : Col u x v := by
+    rw [col_iff_on_same_line]; exact ⟨A, hA, huA, hxA, hvB⟩
+  have h_or := eq_or_eq_of_right_col hR hcol
+  exact hvx <| Or.resolve_left h_or hux
+
+-- Satz 8.14ii
+
+theorem perpx_iff_perp_isectx {G : Geom} {A B : PSet G} {x : Point} :
+   (A ⟂[x] B) ↔ (A ⟂ B ∧ x.Is A B) := by
+    constructor
+    · intro ⟨hA, hB, hxA, hxB, huv⟩
+      have hperp : A ⟂ B := ⟨x, hA, hB, hxA, hxB, huv⟩
+      exact ⟨hperp, ⟨hA, hB, ne_of_perp hperp, hxA, hxB⟩⟩
+    · intro ⟨⟨y, hA, hB, hyA, hyB, huv⟩, ⟨_, _, _, hxA, hxB⟩⟩
+      have hxy : x = y := eq_of_Raba (huv x x hxA hxB) --- hah!
+      subst hxy; exact ⟨hA, hB, hyA, hyB, huv⟩
+
+-- Satz 8.14iii
+theorem unique_of_perpx {G : Geom} {A B : PSet G} {x y : Point} :
+  (A ⟂[x] B) → (A ⟂[y] B) → x = y :=
+  fun ⟨_, _, hxA, hxB, _⟩ ⟨_, _, _, _, huyb⟩ ↦ eq_of_Raba (huyb x x hxA hxB)
+  --- hah!!
+
+--Satz 8.15
+theorem perp_iff_perpx_of_col_abx_ne {G : Geom} {a b c x : Point} :
+a ≠ b → Col a b x → ( Line a b ⟂ Line c x ↔ Line a b ⟂[x] Line c x) := by
+  intro hne hcol; constructor
+  · intro hperp; rw [perpx_iff_perp_isectx]; refine ⟨hperp, ?_⟩
+    have ⟨y, hA, hB, hxA, hxB, huvx⟩ := hperp
+    have hcx : c ≠ x := ne_of_isline hB
+    have hxy : x = y := unique_isect_pt hA hB (ne_of_perp hperp)
+      ⟨hne, hcol⟩ (line_pt_mem_right hcx) hxA hxB
+    subst hxy; exact ⟨hA, hB, ne_of_perp hperp, hxA, hxB⟩
+  · intro h; rw [perpx_iff_perp_isectx] at h; exact h.1
+
+-- Satz 8.16 (no idea what to call this one lol)
+theorem satz_8_16 {G : Geom} {a b c x u : Point} : a ≠ b → Col a b x →
+  Col a b u → u ≠ x → (Line a b ⟂ Line c x ↔ (¬ Col a b c ∧ Right c x u)) := by
+    intro hab hcol1 hcol2 hux; constructor
+    · intro hperp; have hxA : x ∈ Line a b := ⟨hab, hcol1⟩
+      have hneAB : Line a b ≠ Line c x := ne_of_perp hperp
+      have ⟨y, hA, hB, hyA, hyB, huyv⟩ := hperp;
+      have hcx : c ≠ x := ne_of_isline hB
+      have hxB : x ∈ Line c x := (line_pt_mem_right hcx);  constructor
+      · intro hcol3; have hcA : c ∈ Line a b := ⟨hab, hcol3⟩
+        have hcB : c ∈ Line c x := line_pt_mem_left hcx
+        exact hneAB <| line_incid_unique (ne_of_isline hB) (Line a b) (Line c x)
+          hA hB hcA hcB hxA hxB
+      · have hxy : x = y := eq_of_Raba <| huyv x x hxA hxB
+        subst hxy; exact (huyv u c ⟨hab, hcol2⟩ (line_pt_mem_left hcx)).symm
+    · intro ⟨hncol, hR⟩; have hcx : c ≠ x := by intro h'; subst h'; exact hncol hcol1
+      refine ⟨x, ?_⟩; rw [perpx_iff_nontriv]
+      refine ⟨line_is_line hab, line_is_line hcx, ⟨hab, hcol1⟩, line_pt_mem_right hcx, ?_⟩
+      exact ⟨u, c, ⟨hab, hcol2⟩, line_pt_mem_left hcx, hux, hcx, hR.symm⟩
 end Geom
 end Ch8

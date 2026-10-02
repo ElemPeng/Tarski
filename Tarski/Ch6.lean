@@ -305,7 +305,9 @@ IsLine A → IsLine B → A ≠ B → x ∈ A → x ∈ B → y ∈ A → y ∈ 
      Classical.not_not.mp (mt (fun h ↦ line_incid_unique h A B hA hB hxA hxB hyA hyB) hAB)
 
 -- Def 6.22
-def Point.IsectPt {G : Geom} (x : Point) (A B : PSet G) :=
+
+
+def Point.Is {G : Geom} (x : Point) (A B : PSet G):=
     IsLine A ∧ IsLine B ∧ A ≠ B ∧ x ∈ A ∧ x ∈ B
 
 -- Satz 6.23
@@ -341,6 +343,10 @@ theorem another_pt_on_line {G : Geom} {A : PSet G} {x : Point} : IsLine A → x 
     intro ⟨p, q, hpq, hA⟩ hxA; subst hA; by_cases hpx : p = x
     · subst hpx; exact ⟨q, hpq.symm, line_pt_mem_right hpq⟩
     exact ⟨p, hpx, line_pt_mem_left hpq⟩
+
+theorem ne_of_isline {G : Geom} {a b : Point} : IsLine (Line a b) → a ≠ b := by
+    intro ⟨x, y, hxy, heq⟩ hab; subst hab; unfold Line at heq; simp at heq
+    rw [funext_iff] at heq; rw [heq x]; exact ⟨hxy, col_triv_xyx⟩
 
 
 
