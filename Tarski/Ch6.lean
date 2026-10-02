@@ -252,6 +252,12 @@ theorem line_gen_pt_mem {G : Geom} {p q : Point} :
     ·   exact ⟨hpq, col_triv_xyx⟩
     ·   exact ⟨hpq, col_triv_xyy⟩
 
+theorem line_pt_mem_left {G : Geom} {p q : Point} :
+    p ≠ q → p ∈ Line p q := fun h ↦ (line_gen_pt_mem h).1
+
+theorem line_pt_mem_right {G : Geom} {p q : Point} :
+    p ≠ q → q ∈ Line p q := fun h ↦ (line_gen_pt_mem h).2
+
 theorem line_symm {G : Geom} {p q : Point} :
     p ≠ q → Line p q = Line q p := by
     intro hpq; unfold Line; simp [hpq, hpq.symm, col_xy_iff]; rfl
@@ -330,6 +336,11 @@ theorem ext_of_Lab {G : Geom} {a b : Point} : a ≠ b → ∃ c, c ∉ Line a b 
     intro x y z; have hxL := h x; have hyL := h y; have hzL := h z
     rw [col_iff_on_same_line]; exact ⟨Line a b, line_is_line hab, hxL, hyL, hzL⟩
 
+-- not proven in SST because it's obvious but I helpful to have as a function
+theorem another_pt_on_line {G : Geom} {A : PSet G} {x : Point} : IsLine A → x ∈ A → ∃ y, y ≠ x ∧ y ∈ A := by
+    intro ⟨p, q, hpq, hA⟩ hxA; subst hA; by_cases hpx : p = x
+    · subst hpx; exact ⟨q, hpq.symm, line_pt_mem_right hpq⟩
+    exact ⟨p, hpx, line_pt_mem_left hpq⟩
 
 
 
