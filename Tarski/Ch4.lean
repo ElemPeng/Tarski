@@ -146,6 +146,17 @@ theorem dist_of_not_col {G : Geom} {a b c : Point} : ¬(Col a b c) → a ≠ b �
     · exact htri col_triv_xxy
     · exact htri col_triv_xyy
     · exact htri col_triv_xyx
+
+theorem dist_xy_of_not_col {G : Geom} {a b c : Point} : ¬(Col a b c) → a ≠ b :=
+    fun h ↦ (dist_of_not_col h).1
+
+theorem dist_yz_of_not_col {G : Geom} {a b c : Point} : ¬(Col a b c) → b ≠ c :=
+    fun h ↦ (dist_of_not_col h).2.1
+
+theorem dist_xz_of_not_col {G : Geom} {a b c : Point} : ¬(Col a b c) → a ≠ c :=
+    fun h ↦ (dist_of_not_col h).2.2
+
+
 -- Satz 4.13
 theorem col_of_col_e3 {G : Geom} {x y z x' y' z' : Point} :
     Col x y z → E3 x y z x' y' z' → Col x' y' z' := by

@@ -54,5 +54,6 @@ namespace Geom
 def PSet (G : Geom) := Point → Prop
 instance {G : Geom} : Membership Point (PSet G ) where mem A x := A x
 
-def Pair {G : Geom} := Point × Point
+
+
 end Geom

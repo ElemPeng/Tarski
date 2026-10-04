@@ -185,7 +185,14 @@ a ≠ b → Col a b x → ( Line a b ⟂ Line c x ↔ Line a b ⟂[x] Line c x) 
   · intro h; rw [perpx_iff_perp_isectx] at h; exact h.1
 
 -- Satz 8.16 (no idea what to call this one lol)
-theorem satz_8_16 {G : Geom} {a b c x u : Point} : a ≠ b → Col a b x →
+/- it's saying that if the line a b is perpendicular to the line c x,
+x lies in Line a b and u is any point on Line a b besides x,
+then c does not lie on Line a b, and the points c x and b form a
+right angle; a better way to think about it is that it's saying that all
+you need to show ab ⟂ cx is to show that (1) x ∈ ab, (2) there is some point
+u ∈ ab so that u ≠ x (3) ∠cxu is a right angle and (4) c ∉ ab
+-/
+theorem dropped_perp_iff {G : Geom} {a b c x u : Point} : a ≠ b → Col a b x →
   Col a b u → u ≠ x → (Line a b ⟂ Line c x ↔ (¬ Col a b c ∧ Right c x u)) := by
     intro hab hcol1 hcol2 hux; constructor
     · intro hperp; have hxA : x ∈ Line a b := ⟨hab, hcol1⟩
@@ -203,5 +210,46 @@ theorem satz_8_16 {G : Geom} {a b c x u : Point} : a ≠ b → Col a b x →
       refine ⟨x, ?_⟩; rw [perpx_iff_nontriv]
       refine ⟨line_is_line hab, line_is_line hcx, ⟨hab, hcol1⟩, line_pt_mem_right hcx, ?_⟩
       exact ⟨u, c, ⟨hab, hcol2⟩, line_pt_mem_left hcx, hux, hcx, hR.symm⟩
+
+-- Def 8.17
+/- If ab ⟂ cx and Col abc, then Line cx is the perpendicular to Line ab at x,
+or the perpendicular dropped from c with foot x. -/
+
+-- Satz 8.18 (Lotsatz : Plumb-line Theorem)
+theorem perp_exist_of_ext_pt {G : Geom} {a b c : Point} : ¬ (Col a b c) →
+∃ x, (Col a b x ∧ Line a b ⟂ Line c x) := by
+  intro hncol; have ⟨y, hy1, hy2⟩ := sgmt_const b a a c
+  have ⟨p, hp⟩ := Mamb_of_cacb hy2
+  have hr1 : Right a p y := by rw [← aRp_q_iff_Mpaq] at hp; rwa [←hp] at hy2
+  have ⟨z, hz1, hz2⟩ := sgmt_const a y y p; have ⟨q, hq1, hq2⟩ := sgmt_const p y y a
+  generalize hq' : z.R q = q'; have ⟨c', hc'1, hc'2⟩ := sgmt_const q' y y c
+  have hay : a ≠ y := E_id_mt (dist_xz_of_not_col hncol) hy2
+  have hafs := outer_five_sgmt hay hz1 hq1.symm hq2.symm.lr hz2 E_comm hq2
+  have hE1 : E3 a p y q z y := ⟨hafs.symm.lr,hz2.symm.lr,hq2.lr.symm⟩
+  have hr2 : Right q z y := right_of_right_E3 hr1 hE1
+  symm at hr2; unfold Right at hr2; rw [hq'] at hr2
+  have ⟨x, hx1⟩ : ∃ x, M c x c' := Mamb_of_cacb hc'2.symm
+  have hM1 : M q z q' := Mpaq_of_aRp_q hq'
+  have hqy : q ≠ y := E_id_mt hay hq2.lr; have hq'y : q' ≠ y := E_id_mt hqy hr2.symm.lr
+  by_cases hpy : p = y
+  · subst hpy; have ⟨h1, h2⟩ := hp; have hpc : p = c := E_id h2.symm; subst hpc
+    exact absurd hy1.col.xy hncol
+  have hb1 : B q y c := xyw_of_xyz_yzw_ne hq1.symm hp.1 (Ne.symm hpy)
+  have hzyx := krippenlemma hb1 hc'1 hr2 hc'2.symm hM1 hx1
+  sorry
+  /- what's left : Show L(yz) = L(ab)
+  -/
+
+
+theorem unique_foot_of_perp {G : Geom} {a b c x y: Point} : ¬ (Col a b c) →
+Col a b x → Line a b ⟂ Line c x → Col a b y → Line a b ⟂ Line c y → x = y := by
+  intro hncol hcol1 hperp1 hcol2 hperp2; have hab : a ≠ b := (dist_of_not_col hncol).1
+  by_cases hxy : x = y; exact hxy; change x ≠ y at hxy
+  rw [dropped_perp_iff hab hcol1 hcol2 hxy.symm] at hperp1
+  rw [dropped_perp_iff hab hcol2 hcol1 hxy] at hperp2
+  exact eq_of_Rabc_Racb hperp1.2 hperp2.2
+
+
+
 end Geom
 end Ch8
