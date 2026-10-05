@@ -202,8 +202,7 @@ theorem dropped_perp_iff {G : Geom} {a b c x u : Point} : a ≠ b → Col a b x 
       have hxB : x ∈ Line c x := (line_pt_mem_right hcx);  constructor
       · intro hcol3; have hcA : c ∈ Line a b := ⟨hab, hcol3⟩
         have hcB : c ∈ Line c x := line_pt_mem_left hcx
-        exact hneAB <| line_incid_unique (ne_of_isline hB) (Line a b) (Line c x)
-          hA hB hcA hcB hxA hxB
+        exact hneAB <| line_incid_unique (ne_of_isline hB) hA hB hcA hcB hxA hxB
       · have hxy : x = y := eq_of_Raba <| huyv x x hxA hxB
         subst hxy; exact (huyv u c ⟨hab, hcol2⟩ (line_pt_mem_left hcx)).symm
     · intro ⟨hncol, hR⟩; have hcx : c ≠ x := by intro h'; subst h'; exact hncol hcol1
@@ -216,6 +215,7 @@ theorem dropped_perp_iff {G : Geom} {a b c x u : Point} : a ≠ b → Col a b x 
 or the perpendicular dropped from c with foot x. -/
 
 -- Satz 8.18 (Lotsatz : Plumb-line Theorem)
+
 theorem perp_exist_of_ext_pt {G : Geom} {a b c : Point} : ¬ (Col a b c) →
 ∃ x, (Col a b x ∧ Line a b ⟂ Line c x) := by
   intro hncol; have ⟨y, hy1, hy2⟩ := sgmt_const b a a c
@@ -226,6 +226,7 @@ theorem perp_exist_of_ext_pt {G : Geom} {a b c : Point} : ¬ (Col a b c) →
   have hay : a ≠ y := E_id_mt (dist_xz_of_not_col hncol) hy2
   have hafs := outer_five_sgmt hay hz1 hq1.symm hq2.symm.lr hz2 E_comm hq2
   have hE1 : E3 a p y q z y := ⟨hafs.symm.lr,hz2.symm.lr,hq2.lr.symm⟩
+  -- Setting up the Krippenlemma
   have hr2 : Right q z y := right_of_right_E3 hr1 hE1
   symm at hr2; unfold Right at hr2; rw [hq'] at hr2
   have ⟨x, hx1⟩ : ∃ x, M c x c' := Mamb_of_cacb hc'2.symm
@@ -236,9 +237,30 @@ theorem perp_exist_of_ext_pt {G : Geom} {a b c : Point} : ¬ (Col a b c) →
     exact absurd hy1.col.xy hncol
   have hb1 : B q y c := xyw_of_xyz_yzw_ne hq1.symm hp.1 (Ne.symm hpy)
   have hzyx := krippenlemma hb1 hc'1 hr2 hc'2.symm hM1 hx1
-  sorry
-  /- what's left : Show L(yz) = L(ab)
-  -/
+  -- need to show Line a b = Line y z
+  have hab : a ≠ b := dist_xy_of_not_col hncol; have hA := line_is_line (hab)
+  have hyz : y ≠ z := E_id_mt hpy hz2.r; have hB := line_is_line (hyz)
+  have hAB : Line a b = Line y z := line_incid_unique hay hA hB (line_pt_mem_left hab) ⟨hyz, hz1.col.l⟩
+     ⟨hab, hy1.col.xy⟩ (line_pt_mem_left hyz)
+  have hxB : x ∈ Line y z := ⟨hyz, hzyx.col.xy⟩;
+  have hxA : x ∈ Line a b := by rw [hAB]; exact hxB
+  have hcx : c ≠ x := by intro h; subst h; exact hncol hxA.2
+  have hxC : x ∈ Line c x := line_pt_mem_right hcx
+  rw [hAB]; refine ⟨x, hxA.2, ⟨x,?_⟩⟩
+  rw [perpx_iff_nontriv]; refine ⟨hB, line_is_line hcx, hxB, hxC,?_⟩
+  refine ⟨y, c, line_pt_mem_left hyz, line_pt_mem_left hcx , ?_⟩
+  have hyx : y ≠ x := by -- if y = x the whole cradle collapses
+    intro h; subst h; have hyc' : y ≠ c' := E_id_mt hcx.symm hc'2
+    have hb'1 : B y q c' ∨ B y c' q :=
+      yzw_or_ywz_of_ne_xyz_xyw hcx hb1.symm hx1.1
+    have hb'2 : B q y q' := by
+      rcases hb'1 with h'' | h''
+      · exact yzw_of_xyz_xzw h''.symm hc'1.symm
+      · exact xzw_of_xyz_yzw_ne h''.symm hc'1.symm hyc'.symm
+    have hM3 : M q y q' := ⟨hb'2, hr2⟩
+    exact hyz <| unique_M hM3 hM1
+  refine ⟨hyx, hcx, ?_⟩; unfold Right; rw [← aRp_q_iff_Mpaq] at hx1
+  rw [hx1]; exact hc'2.symm
 
 
 theorem unique_foot_of_perp {G : Geom} {a b c x y: Point} : ¬ (Col a b c) →

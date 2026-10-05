@@ -293,16 +293,16 @@ theorem line_incid {G : Geom} {p q : Point} : p ≠ q →
     ∃ L : PSet G, IsLine L ∧ p ∈ L ∧ q ∈ L :=
     fun hpq ↦ ⟨Line p q, ⟨p, q, hpq, rfl⟩ , line_gen_pt_mem hpq⟩
 
-theorem line_incid_unique {G : Geom} {p q : Point} : p ≠ q → ∀ A B : PSet G,
+theorem line_incid_unique {G : Geom} {p q : Point} {A B : PSet G} : p ≠ q →
 IsLine A → IsLine B → p ∈ A → p ∈ B → q ∈ A → q ∈ B → A = B :=
-    fun hpq _ _ hA hB hpA hpB hqA hqB ↦
+    fun hpq hA hB hpA hpB hqA hqB ↦
         (line_pq_ext hB hpq hpB hqB) ▸ (line_pq_ext hA hpq hpA hqA)
 
 -- Satz 6.21
 theorem unique_isect_pt {G : Geom} {A B : PSet G} {x y : Point} :
 IsLine A → IsLine B → A ≠ B → x ∈ A → x ∈ B → y ∈ A → y ∈ B → x = y :=
     fun hA hB hAB hxA hxB hyA hyB ↦
-     Classical.not_not.mp (mt (fun h ↦ line_incid_unique h A B hA hB hxA hxB hyA hyB) hAB)
+     Classical.not_not.mp (mt (fun h ↦ line_incid_unique h hA hB hxA hxB hyA hyB) hAB)
 
 -- Def 6.22
 
