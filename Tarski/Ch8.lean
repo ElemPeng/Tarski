@@ -271,6 +271,95 @@ Col a b x → Line a b ⟂ Line c x → Col a b y → Line a b ⟂ Line c y → 
   rw [dropped_perp_iff hab hcol2 hcol1 hxy] at hperp2
   exact eq_of_Rabc_Racb hperp1.2 hperp2.2
 
+-- Lemma 8.20
+theorem lemma_8_20 {G : Geom} {a b c p : Point} : Right a b c →
+M (a.R c) p (b.R c) → (Right b a p ∧ (b ≠ c → a ≠ p)) := by
+  intro hr1 hM1; generalize hd : b.R c = d
+  generalize hb' : a.R b = b'; generalize hc' : a.R c = c'
+  generalize hd' : a.R d = d'; generalize hp' : a.R p = p'
+  rw [hc', hd] at hM1; have ⟨hb1, he1⟩ := hM1
+  have ha : a.R a = a := R_self a; by_cases hab : a = b
+  -- if a = b the whole thing collapses
+  · subst hab; refine ⟨right_aab, ?_⟩; intro hac hap
+    subst hap; rw [ha] at hb' hp'; subst hp'
+    rw [hc'] at hd; subst hd; have hac' : c' = a := btwn_id hb1
+    subst hac'; rw [R_comm] at hc' ha; exact hac (ha.symm ▸ hc'.symm)
+  have hr2 : Right b' b c := by
+    rw [aRp_q_iff_Mpaq] at hb'; exact right_extend hr1 hab hb'.1.col.xy
+  have hd'' : b'.R c' = d' := by
+      rw [aRp_q_iff_Mpaq] at hd ⊢; simp [← hb', ← hc', ← hd']; rwa [← R_M]
+  have hr3 : Right b b' c' := by
+    unfold Right at hr2; rw [hd, E_R_iff (a := a), hc', hd', ←(R_comm.mp hb')] at hr2
+    rwa [←hd''] at hr2
+  have he2 : E b c' b d' := by unfold Right at hr3; rwa [hd''] at hr3
+  have hb3 : B c' p d := hM1.1; have hb4 : B c p' d' := by
+    rwa [(R_comm.mp hc'), ← hp', ← hd', ← btwn_R_iff]
+  have hafs : E p b p' b := by
+    refine inner_five_sgmt hb3 hb4.symm ?_ ?_ ?_ ?_
+    · rw [←hd', ←hp']; exact E_trans he1.lr R_isometry
+    · rw [← hp', (R_comm.mp hc')]; exact E_trans he1.symm R_isometry
+    · unfold Right at hr3; rwa [←hd'', E_flip_both_iff]
+    · rw [E_symm_iff, E_flip_both_iff]; rw [aRp_q_iff_Mpaq] at hd
+      exact hd.2
+  rw [←hp'] at hafs; refine ⟨hafs.lr, ?_⟩; apply mt; intro h
+  -- to show b ≠ c → a ≠ p we show a = p → b = c
+  subst h; rw [ha] at hp'; subst hp'; have hcd : c = d := by
+    rw [← aRp_q_iff_Mpaq] at hM1; exact hM1 ▸ (R_comm.mp hc')
+  subst hcd; symm; rwa [R_eq_self_iff] at hd
+
+  -- Satz 8.21
+  /- the beginning of plane separation
+  -- note that Line a b ⟂ Line p a forces p ≠ a because it forces
+    IsLine Line p a
+  -/
+  theorem plane_sep_perp {G : Geom} {a b c : Point} : ¬ Col a b c → ∃ p t,
+    (Line a b ⟂ Line p a ∧ Col a b t ∧ B c t p) := by
+    intro hncol; have hab : a ≠ b := dist_xy_of_not_col hncol
+    have ⟨x, hx1, hx2⟩ := perp_exist_of_ext_pt hncol
+    generalize hd : x.R c = d; generalize hc' : a.R c = c'
+    by_cases hax : a = x
+    · subst hax; refine ⟨c', a, ?_, col_triv_xyx, ?_⟩
+      · have hac : a ≠ c := dist_xz_of_not_col hncol
+        rw [aRp_q_iff_Mpaq] at hc'
+        have hac' : a ≠ c' := E_id_mt hac hc'.2.symm
+        have heq : Line c a = Line c' a := line_incid_unique hac
+          (line_is_line hac.symm) (line_is_line hac'.symm) (line_pt_mem_right hac.symm)
+          (line_pt_mem_right hac'.symm) (line_pt_mem_left hac.symm)
+          ⟨hac'.symm, hc'.1.col.xz⟩
+        rwa [heq] at hx2
+      · exact (aRp_q_iff_Mpaq.mp hc').1
+    rw [dropped_perp_iff hab hx1 col_triv_xyx hax] at hx2
+    have ⟨_, hr2⟩ := hx2
+    symm at hr2; unfold Right at hr2
+    have ⟨hb1, he1⟩ := Mpaq_of_aRp_q hc'
+    have he2 := E_eucl he1 hr2; rw [←hc'] at he2
+    have ⟨p, hp⟩ := Mamb_of_cacb he2
+    have ⟨h1, h2⟩ := lemma_8_20 hx2.2.symm hp
+    have ⟨hb2, he3⟩ := Mpaq_of_aRp_q hd
+    rw [hc', hd] at hp
+    have ⟨t, ht1, ht2⟩ := crossbar hb2.symm hb1.symm hp.1.symm
+    have hxc : x ≠ c := by intro h; subst h; exact hncol hx1
+    have hap : a ≠ p := h2 hxc
+    refine ⟨p, t, ?_, ?_, ht1.symm⟩
+    · rw [dropped_perp_iff hab col_triv_xyx hx1 (Ne.symm hax)]
+      refine ⟨?_, h1.symm⟩
+      have hr3 : Right b a p := right_extend h1 (Ne.symm hax) hx1.r
+      intro hcol; have h := (eq_or_eq_of_right_col) hr3 hcol.xy
+      exact hap.symm <| Or.resolve_left h hab.symm
+    · exact col_iff_on_same_line.mpr
+        ⟨Line a x, line_is_line hax, line_pt_mem_left hax, ⟨hax, hx1.yz⟩, ⟨hax, ht2.col.r⟩⟩
+
+  theorem plane_sep_perp' {G : Geom} {a b c : Point} : a ≠ b → ∃ p t,
+    (Line a b ⟂ Line p a ∧ Col a b t ∧ B c t p) := by
+    intro hab; by_cases hcol : Col a b c
+    · have ⟨c', hc'⟩ := ext_of_Lab hab; change ¬ (a ≠ b ∧ Col a b c') at hc'
+      rw [Classical.not_and_iff_not_or_not] at hc'
+      have hncol : ¬ Col a b c' := Or.neg_resolve_left hc' hab
+      have ⟨p, _, hperp, _⟩ := plane_sep_perp hncol
+      refine ⟨p, c, hperp, hcol, btwn_refl⟩
+    exact plane_sep_perp hcol
+
+
 
 
 end Geom

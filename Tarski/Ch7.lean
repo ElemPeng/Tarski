@@ -81,6 +81,12 @@ theorem R_bijection {G : Geom} {a : Point} :
 theorem R_involution {G : Geom} {a : Point} : a.R ∘ a.R = id :=
 funext (double_reflect a)
 
+theorem R_comm {G : Geom} {a x y : Point} : a.R x = y ↔ x = a.R y := by
+  constructor; all_goals intro h <;> subst h
+  · symm; exact double_reflect a x
+  · exact double_reflect a y
+
+
 -- Satz 7.13
 
 theorem xax'_of_pap'_p'px_xp'x {G : Geom} {x p a p' x' : Point}
