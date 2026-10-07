@@ -7,7 +7,7 @@ namespace Geom
 theorem E_refl {G : Geom} {x y : Point} : E x y x y := E_eucl E_comm E_comm
 
 --Satz 2.2
-theorem E.symm {G : Geom} {x y z w : Point} (h : E x y z w) : E z w x y :=
+@[symm] theorem E.symm {G : Geom} {x y z w : Point} (h : E x y z w) : E z w x y :=
     E_eucl h E_refl
 
 theorem E_symm_iff {G : Geom} {x y z w : Point} : E x y z w ↔ E z w x y := by

@@ -115,7 +115,7 @@ theorem PSet.perp_at_x.symm {G : Geom} {A B : PSet G} {x : Point} (h : A ⟂[x] 
 @[symm] theorem perp_symm {G : Geom} {A B : PSet G} : A ⟂ B → B ⟂ A :=
 fun ⟨x, hx⟩ ↦ ⟨x, hx.symm⟩
 
-theorem perp.symm {G : Geom} {A B : PSet G} (h : A ⟂ B) : B ⟂ A := perp_symm h
+theorem PSet.perp.symm {G : Geom} {A B : PSet G} (h : A ⟂ B) : B ⟂ A := perp_symm h
 
 -- Satz 8.13 : perpendicular lines form nontrivial right angles
 
@@ -310,8 +310,7 @@ M (a.R c) p (b.R c) → (Right b a p ∧ (b ≠ c → a ≠ p)) := by
   -- Satz 8.21
   /- the beginning of plane separation
   -- note that Line a b ⟂ Line p a forces p ≠ a because it forces
-    IsLine Line p a
-  -/
+    IsLine Line p a  -/
   theorem plane_sep_perp {G : Geom} {a b c : Point} : ¬ Col a b c → ∃ p t,
     (Line a b ⟂ Line p a ∧ Col a b t ∧ B c t p) := by
     intro hncol; have hab : a ≠ b := dist_xy_of_not_col hncol
@@ -349,7 +348,7 @@ M (a.R c) p (b.R c) → (Right b a p ∧ (b ≠ c → a ≠ p)) := by
     · exact col_iff_on_same_line.mpr
         ⟨Line a x, line_is_line hax, line_pt_mem_left hax, ⟨hax, hx1.yz⟩, ⟨hax, ht2.col.r⟩⟩
 
-  theorem plane_sep_perp' {G : Geom} {a b c : Point} : a ≠ b → ∃ p t,
+  theorem plane_sep_perp' {G : Geom} {a b : Point} (c : Point) : a ≠ b → ∃ p t,
     (Line a b ⟂ Line p a ∧ Col a b t ∧ B c t p) := by
     intro hab; by_cases hcol : Col a b c
     · have ⟨c', hc'⟩ := ext_of_Lab hab; change ¬ (a ≠ b ∧ Col a b c') at hc'
@@ -359,8 +358,76 @@ M (a.R c) p (b.R c) → (Right b a p ∧ (b ≠ c → a ≠ p)) := by
       refine ⟨p, c, hperp, hcol, btwn_refl⟩
     exact plane_sep_perp hcol
 
+-- Satz 5.22 : Midpoints exist!
+  theorem right_of_ab_perp_bc {G : Geom} {a b c : Point} : Line a b ⟂ Line b c → Right a b c := by
+    intro hperp; have ⟨x, hA, hB, hxA, hxB, huv⟩ := hperp
+    have heq1 : Line a b = Line b a := line_symm hxA.1
+    have heq2 : Line b c = Line c b := line_symm hxB.1
+    rw [heq1] at hperp hA hxA huv; rw [heq2] at hperp hB hxB huv
+    rw [dropped_perp_iff hxA.1 col_triv_xyx col_triv_xyy hxA.1.symm] at hperp
+    exact hperp.2.symm
 
+  theorem ne_left_of_ab_perp_cd {G : Geom} {a b c d : Point} :
+  Line a b ⟂ Line c d → a ≠ b := fun ⟨_, _, _, ⟨h, _⟩, _⟩ ↦ h
 
+  theorem ne_right_of_ab_perp_cd {G : Geom} {a b c d : Point} :
+  Line a b ⟂ Line c d → c ≠ d := fun ⟨_, _, _, _, ⟨h, _⟩, _⟩ ↦ h
+
+  theorem midpt_le_lemma {G : Geom} {a b p q t: Point} (hab : a ≠ b) (hle : le a p b q)
+  (hb : B p t q) (hcol : Col a b t) (hperp1 : Line b a ⟂ Line q b)
+  (hperp2 : Line a b ⟂ Line p a) : ∃ m, M a m b := by
+    unfold le at hle; obtain ⟨r, hb1, he1⟩ := hle
+    have ⟨x, hb2, hb3⟩ := inner_pasch hb1 hb
+    have hbq : b ≠ q := (ne_right_of_ab_perp_cd hperp1).symm
+    have hap : a ≠ p := (ne_right_of_ab_perp_cd hperp2).symm
+    have hbr : b ≠ r := E_id_mt hap he1.symm
+    have heq1 : Line q b = Line r b := by
+      rw [line_symm hbq.symm, line_symm hbr.symm]
+      apply line_eq hbr.symm ⟨hbq, hb1.col.yz⟩
+    rw [heq1] at hperp1; have hr1 := right_of_ab_perp_bc hperp1.symm
+    have hr2 := right_of_ab_perp_bc hperp2.symm; have hcol2 : Col a x b := by
+      by_cases hbt : b = t
+      · subst hbt; have hbx := btwn_id hb3; subst hbx; exact col_triv_xyy
+      exact col_iff_on_same_line.mpr
+        ⟨Line b t, line_is_line hbt, ⟨hbt, hcol.l⟩, ⟨hbt, hb3.col.r⟩, line_pt_mem_left hbt⟩
+    have hncol1 : ¬ Col a b r := by
+      intro h; have h' := eq_or_eq_of_right_col hr1 h.xz;  simp [hbr.symm, hab] at h'
+    have hncol2 : ¬ Col a p b := by
+      intro h; have h' := eq_or_eq_of_right_col hr2 h.xy; simp [hap.symm, hab.symm] at h'
+    have hpr : p ≠ r := by intro h; subst h; exact hab (eq_of_Rabc_Racb hr2 hr1)
+    suffices hE : E b p a r from
+      ⟨x, (central_symm_quad hncol2 hpr he1 hE.lr hcol2 hb2.symm.col).1⟩
+    have hax : a ≠ x := by
+      intro h; subst h; have hr3 : Right r a b := by
+        exact right_extend hr2 hap.symm (hb2.col.xz)
+      exact hab (eq_of_Rabc_Racb hr3 hr1)
+    generalize hp' : a.R p = p'; have ⟨r', hr'1, hr'2⟩ := sgmt_const p' x x r
+    have ⟨m, hm⟩ := Mamb_of_cacb hr'2; have hr3 : Right r m x := by
+      symm; unfold Right; rw [midpt_symm_iff, ← aRp_q_iff_Mpaq] at hm
+      rwa [hm, E_symm_iff]
+    have hr4 : Right x a p := right_extend hr2.symm hab.symm hcol2.r
+    have he2 : E x p x p' := by unfold Right at hr4; rwa [hp'] at hr4
+    have hpp' : p ≠ p' := by intro h; subst h; exact hap.symm (R_eq_self_iff.mp hp')
+    rw [aRp_q_iff_Mpaq] at hp'; have hncol3 : ¬ Col x p p' := by
+      intro h; have h1 : Col x a p := col_iff_on_same_line.mpr
+        ⟨Line p p', line_is_line hpp', ⟨hpp', h.l⟩ , ⟨hpp', hp'.1.col.yz⟩ , line_pt_mem_left hpp'⟩
+      have h2 := eq_or_eq_of_right_col hr4 h1; simp [hap.symm, hax.symm] at h2
+    have hb4 : B a x m := (krippenlemma hb2 hr'1.symm hr'2.symm he2 hm.symm hp').symm
+    have hne2 : x ≠ m := cradle_nontriv' hb2 hr'1.symm hr'2.symm he2 hm.symm hp' hax.symm
+    sorry
+    -- show that m = b then back where I was
+
+  theorem midpt_exist {G : Geom} {a b : Point} : ∃ m, M a m b := by
+    by_cases hab : a = b
+    · subst hab; exact ⟨a, midpt_triv.mpr rfl⟩
+    change a ≠ b at hab; have ⟨q, _, hperp1, _⟩ := plane_sep_perp' a hab.symm
+    have ⟨p, t, hperp2, hcol, hb1⟩ := plane_sep_perp' q hab
+    rcases (le_total a p b q) with h | h
+    · exact midpt_le_lemma hab h hb1.symm hcol hperp1 hperp2
+    · have ⟨m, hm⟩ := midpt_le_lemma hab.symm h hb1 hcol.xy hperp2 hperp1; exact ⟨m, hm.symm⟩
+
+  theorem midpt_unique {G : Geom} {a b m n : Point} : M a m b → M a n b → m = n :=
+    unique_M
 
 end Geom
 end Ch8

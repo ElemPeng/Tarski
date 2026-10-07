@@ -15,6 +15,9 @@ def M {G : Geom} (a m b : Point) := B a m b ∧ E m a m b
 
 theorem M.symm {G : Geom} {a m b : Point} (h : M a m b) : M b m a := midpt_symm h
 
+theorem midpt_symm_iff {G : Geom} {a m b : Point} : M a m b ↔ M b m a :=
+  Iff.intro (midpt_symm) (midpt_symm)
+
 -- Satz 7.3
 
 theorem midpt_triv {G : Geom} {a m : Point} : M a m a ↔ m = a := by
@@ -260,7 +263,17 @@ B a1 c a2 → B b1 c b2 → E c a1 c b1 → E c a2 c b2 → M a1 m1 b1 → M a2 
   · exact krippenlemma_wlog h hb1 hb2 he1 he2 hm1 hm2
   · exact (krippenlemma_wlog h hb1.symm hb2.symm he2 he1 hm2 hm1).symm
 
--- Satz 7.23
+
+--- used later; c ≠ m1 → c ≠ m2 :
+
+theorem cradle_nontriv {G : Geom} {a1 a2 b1 b2 m1 m2 c : Point} :
+B a1 c a2 → B b1 c b2 → E c a1 c b1 → E c a2 c b2 → M a1 m1 b1 → M a2 m2 b2 → c ≠ m1 → c ≠ m2 := by
+ intro hb1 hb2 he1 he2 hm1 hm2 hne heq; sorry
+
+theorem cradle_nontriv' {G : Geom} {a1 a2 b1 b2 m1 m2 c : Point} :
+B a1 c a2 → B b1 c b2 → E c a1 c b1 → E c a2 c b2 → M a1 m1 b1 → M a2 m2 b2 → c ≠ m2 → c ≠ m1 := by
+ intro hb1 hb2 he1 he2 hm1 hm2 hne heq; sorry
+-- Satz 7.25
 
 theorem Mamb_of_cacb {G : Geom} {a b c : Point} : E c a c b → ∃ m, M a m b := by
   intro hcacb; by_cases h: Col a c b
